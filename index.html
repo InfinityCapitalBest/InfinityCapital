@@ -124,6 +124,28 @@
             font-weight: 600;
         }
 
+        /* Estilo para el campo de código de referido */
+        .referral-field {
+            background-color: #f9f9f9;
+            border-left: 4px solid var(--accent);
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .referral-field label {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .referral-field input {
+            background-color: transparent;
+            border: none;
+            font-weight: 600;
+            color: var(--dark);
+            width: 100%;
+        }
+
         /* Estilos para la notificación de bienvenida */
         .notification {
             position: fixed;
@@ -769,6 +791,67 @@
             border-left: 4px solid var(--accent);
         }
 
+        /* Estilos para la gestión de pagos */
+        .payment-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .payment-section h4 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-info strong {
+            color: var(--primary);
+            display: inline-block;
+            width: 150px;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-payment-form {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
         /* Checkbox para selección múltiple */
         .admin-checkbox {
             width: 18px;
@@ -842,6 +925,21 @@
             .menu-toggle.visible {
                 display: block;
             }
+            
+            .payment-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .payment-actions {
+                margin-top: 10px;
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -886,6 +984,7 @@
                 <button class="admin-tab" data-tab="withdraw">Solicitudes de Retiro</button>
                 <button class="admin-tab" data-tab="earnings">Ganancias Diarias</button>
                 <button class="admin-tab" data-tab="referrals">Ganancias por Referidos</button>
+                <button class="admin-tab" data-tab="payments">Configuración de Pagos</button>
             </div>
             
             <!-- Tab Usuarios -->
@@ -1010,6 +1109,47 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- NUEVA TAB: Configuración de Pagos -->
+            <div id="adminPaymentsTab" class="admin-tab-content">
+                <h3>Configuración de Wallets y Cuentas Bancarias</h3>
+                
+                <!-- Wallets de Criptomonedas -->
+                <div class="payment-section">
+                    <h4><i class="fas fa-coins"></i> Wallets de Criptomonedas</h4>
+                    <div id="cryptoWalletsList">
+                        <!-- Las wallets se cargarán aquí dinámicamente -->
+                    </div>
+                    
+                    <!-- Formulario para agregar nueva wallet -->
+                    <div class="add-payment-form">
+                        <h5>Agregar Nueva Wallet</h5>
+                        <div class="form-row">
+                            <input type="text" id="newCryptoName" placeholder="Nombre de la criptomoneda (ej: USDT BEP20)">
+                            <input type="text" id="newCryptoAddress" placeholder="Dirección de la wallet">
+                            <button class="btn" id="addCryptoWallet">Agregar Wallet</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cuentas Bancarias -->
+                <div class="payment-section">
+                    <h4><i class="fas fa-university"></i> Cuentas Bancarias</h4>
+                    <div id="bankAccountsList">
+                        <!-- Las cuentas bancarias se cargarán aquí dinámicamente -->
+                    </div>
+                    
+                    <!-- Formulario para agregar nueva cuenta bancaria -->
+                    <div class="add-payment-form">
+                        <h5>Agregar Nueva Cuenta Bancaria</h5>
+                        <div class="form-row">
+                            <input type="text" id="newBankName" placeholder="Nombre del banco (ej: Banco Popular)">
+                            <input type="text" id="newBankAccount" placeholder="Número de cuenta">
+                            <button class="btn" id="addBankAccount">Agregar Cuenta</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1034,6 +1174,13 @@
                     <label for="regPassword">Contraseña</label>
                     <input type="password" id="regPassword" required>
                 </div>
+                
+                <!-- CAMPO DE CÓDIGO DE REFERIDO AGREGADO -->
+                <div class="referral-field">
+                    <label for="regReferralCode">Código de Referido (opcional)</label>
+                    <input type="text" id="regReferralCode" placeholder="Ingresa el código de referido">
+                </div>
+                
                 <button type="submit" class="btn">Registrarse</button>
             </form>
             <div class="auth-switch">
@@ -1086,11 +1233,7 @@
             <!-- Opciones de Criptomonedas -->
             <div id="cryptoOptions" class="crypto-options">
                 <h4>Selecciona una criptomoneda:</h4>
-                <div class="crypto-option" data-crypto="USDT BEP20">USDT BEP20</div>
-                <div class="crypto-option" data-crypto="USDT TRC20">USDT TRC20</div>
-                <div class="crypto-option" data-crypto="LTC">LTC</div>
-                <div class="crypto-option" data-crypto="BNB">BNB</div>
-                <div class="crypto-option" data-crypto="TRX">TRX</div>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
                 
                 <!-- Información de Wallet -->
                 <div id="cryptoWalletInfo" class="wallet-info">
@@ -1109,9 +1252,7 @@
             <!-- Opciones de Banco -->
             <div id="bankOptions" class="bank-options">
                 <h4>Selecciona un banco:</h4>
-                <div class="bank-option" data-bank="Banco Reserva">Banco Reserva</div>
-                <div class="bank-option" data-bank="Banco Popular">Banco Popular</div>
-                <div class="bank-option" data-bank="Banco BHD">Banco BHD</div>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
                 
                 <!-- Información de Cuenta Bancaria -->
                 <div id="bankAccountInfo" class="bank-info">
@@ -1145,11 +1286,7 @@
             <!-- Opciones de Criptomonedas para Retiro -->
             <div id="withdrawCryptoOptions" class="crypto-options">
                 <h4>Selecciona una criptomoneda:</h4>
-                <div class="crypto-option" data-crypto="USDT BEP20">USDT BEP20</div>
-                <div class="crypto-option" data-crypto="USDT TRC20">USDT TRC20</div>
-                <div class="crypto-option" data-crypto="LTC">LTC</div>
-                <div class="crypto-option" data-crypto="BNB">BNB</div>
-                <div class="crypto-option" data-crypto="TRX">TRX</div>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
                 
                 <!-- Información de Wallet para Retiro -->
                 <div id="withdrawCryptoInfo" class="wallet-info">
@@ -1167,9 +1304,7 @@
             <!-- Opciones de Banco para Retiro -->
             <div id="withdrawBankOptions" class="bank-options">
                 <h4>Selecciona un banco:</h4>
-                <div class="bank-option" data-bank="Banco Reserva">Banco Reserva</div>
-                <div class="bank-option" data-bank="Banco Popular">Banco Popular</div>
-                <div class="bank-option" data-bank="Banco BHD">Banco BHD</div>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
                 
                 <!-- Información de Cuenta para Retiro -->
                 <div id="withdrawBankInfo" class="bank-info">
@@ -1529,6 +1664,17 @@
         const adminEarningsTable = document.getElementById('adminEarningsTable');
         const adminReferralsTable = document.getElementById('adminReferralsTable');
 
+        // Nuevos elementos para gestión de pagos
+        const adminPaymentsTab = document.getElementById('adminPaymentsTab');
+        const cryptoWalletsList = document.getElementById('cryptoWalletsList');
+        const bankAccountsList = document.getElementById('bankAccountsList');
+        const addCryptoWallet = document.getElementById('addCryptoWallet');
+        const addBankAccount = document.getElementById('addBankAccount');
+        const newCryptoName = document.getElementById('newCryptoName');
+        const newCryptoAddress = document.getElementById('newCryptoAddress');
+        const newBankName = document.getElementById('newBankName');
+        const newBankAccount = document.getElementById('newBankAccount');
+
         // Botones de selección múltiple
         const approveSelectedUsers = document.getElementById('approveSelectedUsers');
         const deleteSelectedUsers = document.getElementById('deleteSelectedUsers');
@@ -1554,20 +1700,10 @@
         let investmentCounters = {};
         let adminPassword = "admin123"; // Contraseña de administrador
         
-        // Wallets de criptomonedas
-        const cryptoWallets = {
-            "USDT BEP20": "0x8a3aF6f0F8D1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D",
-            "USDT TRC20": "TXYZ1234567890abcdefghijklmnopqrstuvwxyz",
-            "LTC": "LXYZ1234567890abcdefghijklmnopqrstuvwxyz",
-            "BNB": "bnb1234567890abcdefghijklmnopqrstuvwxyz",
-            "TRX": "TXYZ1234567890abcdefghijklmnopqrstuvwxyz"
-        };
-        
-        // Cuentas bancarias
-        const bankAccounts = {
-            "Banco Reserva": "123-456789-0",
-            "Banco Popular": "987-654321-0", 
-            "Banco BHD": "456-123789-0"
+        // Configuración inicial de pagos (se cargará desde Firestore)
+        let paymentSettings = {
+            cryptoWallets: {},
+            bankAccounts: {}
         };
 
         // Navegación entre registro y login
@@ -1591,6 +1727,7 @@
             const phone = document.getElementById('regPhone').value;
             const cedula = document.getElementById('regCedula').value;
             const password = document.getElementById('regPassword').value;
+            const referralCode = document.getElementById('regReferralCode').value;
             
             // Crear usuario en Firebase Auth
             auth.createUserWithEmailAndPassword(email, password)
@@ -1614,7 +1751,8 @@
                         withdrawRequests: [],
                         pendingEarnings: [],
                         pendingReferrals: [],
-                        referralCode: generateReferralCode()
+                        referralCode: generateReferralCode(),
+                        referredBy: referralCode || null // Guardar el código de referido si existe
                     });
                 })
                 .then(() => {
@@ -1782,21 +1920,37 @@
             cryptoOptions.style.display = 'block';
             bankOptions.style.display = 'none';
             
-            // Agregar event listeners a las opciones de criptomonedas
-            document.querySelectorAll('.crypto-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remover clase active de todas las opciones
-                    document.querySelectorAll('.crypto-option').forEach(opt => {
-                        opt.classList.remove('active');
+            // Cargar wallets desde la base de datos
+            loadCryptoWalletsForUser().then((cryptoWallets) => {
+                // Limpiar opciones existentes
+                const existingOptions = cryptoOptions.querySelectorAll('.crypto-option');
+                existingOptions.forEach(option => option.remove());
+                
+                // Agregar opciones dinámicamente
+                Object.entries(cryptoWallets).forEach(([crypto, address]) => {
+                    const option = document.createElement('div');
+                    option.className = 'crypto-option';
+                    option.setAttribute('data-crypto', crypto);
+                    option.textContent = crypto;
+                    cryptoOptions.appendChild(option);
+                });
+                
+                // Agregar event listeners a las opciones de criptomonedas
+                document.querySelectorAll('.crypto-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Remover clase active de todas las opciones
+                        document.querySelectorAll('.crypto-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        
+                        // Agregar clase active a la opción seleccionada
+                        this.classList.add('active');
+                        
+                        // Mostrar información de wallet
+                        const crypto = this.getAttribute('data-crypto');
+                        cryptoWalletAddress.value = cryptoWallets[crypto];
+                        cryptoWalletInfo.style.display = 'block';
                     });
-                    
-                    // Agregar clase active a la opción seleccionada
-                    this.classList.add('active');
-                    
-                    // Mostrar información de wallet
-                    const crypto = this.getAttribute('data-crypto');
-                    cryptoWalletAddress.value = cryptoWallets[crypto];
-                    cryptoWalletInfo.style.display = 'block';
                 });
             });
         });
@@ -1806,21 +1960,37 @@
             bankOptions.style.display = 'block';
             cryptoOptions.style.display = 'none';
             
-            // Agregar event listeners a las opciones de bancos
-            document.querySelectorAll('.bank-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remover clase active de todas las opciones
-                    document.querySelectorAll('.bank-option').forEach(opt => {
-                        opt.classList.remove('active');
+            // Cargar cuentas bancarias desde la base de datos
+            loadBankAccountsForUser().then((bankAccounts) => {
+                // Limpiar opciones existentes
+                const existingOptions = bankOptions.querySelectorAll('.bank-option');
+                existingOptions.forEach(option => option.remove());
+                
+                // Agregar opciones dinámicamente
+                Object.entries(bankAccounts).forEach(([bank, account]) => {
+                    const option = document.createElement('div');
+                    option.className = 'bank-option';
+                    option.setAttribute('data-bank', bank);
+                    option.textContent = bank;
+                    bankOptions.appendChild(option);
+                });
+            
+                // Agregar event listeners a las opciones de bancos
+                document.querySelectorAll('.bank-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Remover clase active de todas las opciones
+                        document.querySelectorAll('.bank-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        
+                        // Agregar clase active a la opción seleccionada
+                        this.classList.add('active');
+                        
+                        // Mostrar información de cuenta bancaria
+                        const bank = this.getAttribute('data-bank');
+                        bankAccountNumber.value = bankAccounts[bank];
+                        bankAccountInfo.style.display = 'block';
                     });
-                    
-                    // Agregar clase active a la opción seleccionada
-                    this.classList.add('active');
-                    
-                    // Mostrar información de cuenta bancaria
-                    const bank = this.getAttribute('data-bank');
-                    bankAccountNumber.value = bankAccounts[bank];
-                    bankAccountInfo.style.display = 'block';
                 });
             });
         });
@@ -1855,7 +2025,7 @@
             }
             
             const crypto = selectedCrypto.getAttribute('data-crypto');
-            const wallet = cryptoWallets[crypto];
+            const wallet = cryptoWalletAddress.value;
             
             // Crear solicitud de recarga
             const rechargeRequest = {
@@ -1900,7 +2070,7 @@
             }
             
             const bank = selectedBank.getAttribute('data-bank');
-            const account = bankAccounts[bank];
+            const account = bankAccountNumber.value;
             
             // Crear solicitud de recarga
             const rechargeRequest = {
@@ -1934,19 +2104,35 @@
             withdrawCryptoOptions.style.display = 'block';
             withdrawBankOptions.style.display = 'none';
             
-            // Agregar event listeners a las opciones de criptomonedas
-            document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remover clase active de todas las opciones
-                    document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
-                        opt.classList.remove('active');
+            // Cargar wallets desde la base de datos
+            loadCryptoWalletsForUser().then((cryptoWallets) => {
+                // Limpiar opciones existentes
+                const existingOptions = withdrawCryptoOptions.querySelectorAll('.crypto-option');
+                existingOptions.forEach(option => option.remove());
+                
+                // Agregar opciones dinámicamente
+                Object.keys(cryptoWallets).forEach((crypto) => {
+                    const option = document.createElement('div');
+                    option.className = 'crypto-option';
+                    option.setAttribute('data-crypto', crypto);
+                    option.textContent = crypto;
+                    withdrawCryptoOptions.appendChild(option);
+                });
+            
+                // Agregar event listeners a las opciones de criptomonedas
+                document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Remover clase active de todas las opciones
+                        document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        
+                        // Agregar clase active a la opción seleccionada
+                        this.classList.add('active');
+                        
+                        // Mostrar información de wallet para retiro
+                        withdrawCryptoInfo.style.display = 'block';
                     });
-                    
-                    // Agregar clase active a la opción seleccionada
-                    this.classList.add('active');
-                    
-                    // Mostrar información de wallet para retiro
-                    withdrawCryptoInfo.style.display = 'block';
                 });
             });
         });
@@ -1956,19 +2142,35 @@
             withdrawBankOptions.style.display = 'block';
             withdrawCryptoOptions.style.display = 'none';
             
-            // Agregar event listeners a las opciones de bancos
-            document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remover clase active de todas las opciones
-                    document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(opt => {
-                        opt.classList.remove('active');
+            // Cargar cuentas bancarias desde la base de datos
+            loadBankAccountsForUser().then((bankAccounts) => {
+                // Limpiar opciones existentes
+                const existingOptions = withdrawBankOptions.querySelectorAll('.bank-option');
+                existingOptions.forEach(option => option.remove());
+                
+                // Agregar opciones dinámicamente
+                Object.keys(bankAccounts).forEach((bank) => {
+                    const option = document.createElement('div');
+                    option.className = 'bank-option';
+                    option.setAttribute('data-bank', bank);
+                    option.textContent = bank;
+                    withdrawBankOptions.appendChild(option);
+                });
+            
+                // Agregar event listeners a las opciones de bancos
+                document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Remover clase active de todas las opciones
+                        document.querySelectorAll('#withdrawBankOptions .bank-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        
+                        // Agregar clase active a la opción seleccionada
+                        this.classList.add('active');
+                        
+                        // Mostrar información de cuenta para retiro
+                        withdrawBankInfo.style.display = 'block';
                     });
-                    
-                    // Agregar clase active a la opción seleccionada
-                    this.classList.add('active');
-                    
-                    // Mostrar información de cuenta para retiro
-                    withdrawBankInfo.style.display = 'block';
                 });
             });
         });
@@ -2306,7 +2508,7 @@
                 userEarnings.textContent = currentUser.earnings.toFixed(2);
                 
                 // Actualizar enlace de referidos
-                referralLink.value = `https://infinitycapital.com/ref/${currentUser.referralCode}`;
+                referralLink.value = `${window.location.origin}${window.location.pathname}?ref=${currentUser.referralCode}`;
                 
                 // Cargar inversiones activas
                 activeInvestments = currentUser.investments || [];
@@ -2467,6 +2669,275 @@
             alert('Enlace de referidos copiado al portapapeles');
         });
 
+        // =============================================
+        // NUEVAS FUNCIONES PARA GESTIÓN DE PAGOS
+        // =============================================
+
+        // Cargar configuración de pagos desde Firestore
+        function loadPaymentSettings() {
+            return db.collection('paymentSettings').doc('config').get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        paymentSettings = doc.data();
+                        return paymentSettings;
+                    } else {
+                        // Crear configuración por defecto si no existe
+                        const defaultSettings = {
+                            cryptoWallets: {
+                                "USDT BEP20": "0x8a3aF6f0F8D1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D",
+                                "USDT TRC20": "TXYZ1234567890abcdefghijklmnopqrstuvwxyz",
+                                "LTC": "LXYZ1234567890abcdefghijklmnopqrstuvwxyz"
+                            },
+                            bankAccounts: {
+                                "Banco Reserva": "123-456789-0",
+                                "Banco Popular": "987-654321-0",
+                                "Banco BHD": "456-123789-0"
+                            },
+                            lastUpdated: new Date().toISOString(),
+                            updatedBy: "system"
+                        };
+                        
+                        return db.collection('paymentSettings').doc('config').set(defaultSettings)
+                            .then(() => {
+                                paymentSettings = defaultSettings;
+                                return paymentSettings;
+                            });
+                    }
+                });
+        }
+
+        // Cargar wallets de criptomonedas para usuarios
+        function loadCryptoWalletsForUser() {
+            return loadPaymentSettings().then(settings => {
+                return settings.cryptoWallets || {};
+            });
+        }
+
+        // Cargar cuentas bancarias para usuarios
+        function loadBankAccountsForUser() {
+            return loadPaymentSettings().then(settings => {
+                return settings.bankAccounts || {};
+            });
+        }
+
+        // Renderizar wallets de criptomonedas en el panel de administración
+        function renderCryptoWallets() {
+            cryptoWalletsList.innerHTML = '';
+            
+            if (Object.keys(paymentSettings.cryptoWallets).length === 0) {
+                cryptoWalletsList.innerHTML = '<p>No hay wallets configuradas.</p>';
+                return;
+            }
+            
+            Object.entries(paymentSettings.cryptoWallets).forEach(([crypto, address]) => {
+                const walletElement = document.createElement('div');
+                walletElement.className = 'payment-item';
+                walletElement.innerHTML = `
+                    <div class="payment-info">
+                        <strong>${crypto}:</strong> ${address}
+                    </div>
+                    <div class="payment-actions">
+                        <button class="admin-action edit-btn" data-crypto="${crypto}">Editar</button>
+                        <button class="admin-action delete-btn" data-crypto="${crypto}">Eliminar</button>
+                    </div>
+                `;
+                cryptoWalletsList.appendChild(walletElement);
+            });
+            
+            // Agregar event listeners a los botones
+            document.querySelectorAll('#cryptoWalletsList .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const crypto = this.getAttribute('data-crypto');
+                    const newAddress = prompt(`Ingresa la nueva dirección para ${crypto}:`, paymentSettings.cryptoWallets[crypto]);
+                    if (newAddress) {
+                        updateCryptoWallet(crypto, newAddress);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('#cryptoWalletsList .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const crypto = this.getAttribute('data-crypto');
+                    if (confirm(`¿Estás seguro de que deseas eliminar la wallet de ${crypto}?`)) {
+                        deleteCryptoWallet(crypto);
+                    }
+                });
+            });
+        }
+
+        // Renderizar cuentas bancarias en el panel de administración
+        function renderBankAccounts() {
+            bankAccountsList.innerHTML = '';
+            
+            if (Object.keys(paymentSettings.bankAccounts).length === 0) {
+                bankAccountsList.innerHTML = '<p>No hay cuentas bancarias configuradas.</p>';
+                return;
+            }
+            
+            Object.entries(paymentSettings.bankAccounts).forEach(([bank, account]) => {
+                const accountElement = document.createElement('div');
+                accountElement.className = 'payment-item';
+                accountElement.innerHTML = `
+                    <div class="payment-info">
+                        <strong>${bank}:</strong> ${account}
+                    </div>
+                    <div class="payment-actions">
+                        <button class="admin-action edit-btn" data-bank="${bank}">Editar</button>
+                        <button class="admin-action delete-btn" data-bank="${bank}">Eliminar</button>
+                    </div>
+                `;
+                bankAccountsList.appendChild(accountElement);
+            });
+            
+            // Agregar event listeners a los botones
+            document.querySelectorAll('#bankAccountsList .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bank = this.getAttribute('data-bank');
+                    const newAccount = prompt(`Ingresa el nuevo número de cuenta para ${bank}:`, paymentSettings.bankAccounts[bank]);
+                    if (newAccount) {
+                        updateBankAccount(bank, newAccount);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('#bankAccountsList .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bank = this.getAttribute('data-bank');
+                    if (confirm(`¿Estás seguro de que deseas eliminar la cuenta de ${bank}?`)) {
+                        deleteBankAccount(bank);
+                    }
+                });
+            });
+        }
+
+        // Agregar nueva wallet de criptomonedas
+        addCryptoWallet.addEventListener('click', function() {
+            const cryptoName = newCryptoName.value.trim();
+            const cryptoAddress = newCryptoAddress.value.trim();
+            
+            if (!cryptoName || !cryptoAddress) {
+                alert('Por favor ingresa tanto el nombre como la dirección de la wallet.');
+                return;
+            }
+            
+            if (paymentSettings.cryptoWallets[cryptoName]) {
+                alert('Ya existe una wallet con ese nombre.');
+                return;
+            }
+            
+            updateCryptoWallet(cryptoName, cryptoAddress);
+            newCryptoName.value = '';
+            newCryptoAddress.value = '';
+        });
+
+        // Agregar nueva cuenta bancaria
+        addBankAccount.addEventListener('click', function() {
+            const bankName = newBankName.value.trim();
+            const bankAccount = newBankAccount.value.trim();
+            
+            if (!bankName || !bankAccount) {
+                alert('Por favor ingresa tanto el nombre del banco como el número de cuenta.');
+                return;
+            }
+            
+            if (paymentSettings.bankAccounts[bankName]) {
+                alert('Ya existe una cuenta con ese nombre de banco.');
+                return;
+            }
+            
+            updateBankAccount(bankName, bankAccount);
+            newBankName.value = '';
+            newBankAccount.value = '';
+        });
+
+        // Actualizar wallet de criptomonedas
+        function updateCryptoWallet(crypto, address) {
+            paymentSettings.cryptoWallets[crypto] = address;
+            paymentSettings.lastUpdated = new Date().toISOString();
+            paymentSettings.updatedBy = currentUser ? currentUser.email : 'admin';
+            
+            return db.collection('paymentSettings').doc('config').update({
+                cryptoWallets: paymentSettings.cryptoWallets,
+                lastUpdated: paymentSettings.lastUpdated,
+                updatedBy: paymentSettings.updatedBy
+            })
+            .then(() => {
+                renderCryptoWallets();
+                alert(`Wallet ${crypto} actualizada correctamente.`);
+            })
+            .catch((error) => {
+                console.error("Error al actualizar wallet:", error);
+                alert('Error al actualizar la wallet: ' + error.message);
+            });
+        }
+
+        // Eliminar wallet de criptomonedas
+        function deleteCryptoWallet(crypto) {
+            delete paymentSettings.cryptoWallets[crypto];
+            paymentSettings.lastUpdated = new Date().toISOString();
+            paymentSettings.updatedBy = currentUser ? currentUser.email : 'admin';
+            
+            return db.collection('paymentSettings').doc('config').update({
+                cryptoWallets: paymentSettings.cryptoWallets,
+                lastUpdated: paymentSettings.lastUpdated,
+                updatedBy: paymentSettings.updatedBy
+            })
+            .then(() => {
+                renderCryptoWallets();
+                alert(`Wallet ${crypto} eliminada correctamente.`);
+            })
+            .catch((error) => {
+                console.error("Error al eliminar wallet:", error);
+                alert('Error al eliminar la wallet: ' + error.message);
+            });
+        }
+
+        // Actualizar cuenta bancaria
+        function updateBankAccount(bank, account) {
+            paymentSettings.bankAccounts[bank] = account;
+            paymentSettings.lastUpdated = new Date().toISOString();
+            paymentSettings.updatedBy = currentUser ? currentUser.email : 'admin';
+            
+            return db.collection('paymentSettings').doc('config').update({
+                bankAccounts: paymentSettings.bankAccounts,
+                lastUpdated: paymentSettings.lastUpdated,
+                updatedBy: paymentSettings.updatedBy
+            })
+            .then(() => {
+                renderBankAccounts();
+                alert(`Cuenta ${bank} actualizada correctamente.`);
+            })
+            .catch((error) => {
+                console.error("Error al actualizar cuenta bancaria:", error);
+                alert('Error al actualizar la cuenta bancaria: ' + error.message);
+            });
+        }
+
+        // Eliminar cuenta bancaria
+        function deleteBankAccount(bank) {
+            delete paymentSettings.bankAccounts[bank];
+            paymentSettings.lastUpdated = new Date().toISOString();
+            paymentSettings.updatedBy = currentUser ? currentUser.email : 'admin';
+            
+            return db.collection('paymentSettings').doc('config').update({
+                bankAccounts: paymentSettings.bankAccounts,
+                lastUpdated: paymentSettings.lastUpdated,
+                updatedBy: paymentSettings.updatedBy
+            })
+            .then(() => {
+                renderBankAccounts();
+                alert(`Cuenta ${bank} eliminada correctamente.`);
+            })
+            .catch((error) => {
+                console.error("Error al eliminar cuenta bancaria:", error);
+                alert('Error al eliminar la cuenta bancaria: ' + error.message);
+            });
+        }
+
+        // =============================================
+        // FIN DE NUEVAS FUNCIONES PARA GESTIÓN DE PAGOS
+        // =============================================
+
         // Panel de administración - Tabs
         adminTabs.forEach(tab => {
             tab.addEventListener('click', function() {
@@ -2495,6 +2966,12 @@
                     loadAdminEarningsTable();
                 } else if (tabId === 'referrals') {
                     loadAdminReferralsTable();
+                } else if (tabId === 'payments') {
+                    // Cargar configuración de pagos
+                    loadPaymentSettings().then(() => {
+                        renderCryptoWallets();
+                        renderBankAccounts();
+                    });
                 }
             });
         });
@@ -2505,6 +2982,9 @@
             if (password === adminPassword) {
                 adminPanel.style.display = 'block';
                 loadAdminUsersTable();
+                
+                // Cargar configuración de pagos por defecto
+                loadPaymentSettings();
             } else {
                 alert('Contraseña incorrecta.');
             }
@@ -3151,39 +3631,25 @@
             }
         });
 
-        // Función para agregar usuarios de prueba (solo para testing)
-        function addTestUsers() {
-            const testUsers = [
-                {
-                    email: "usuario1@ejemplo.com",
-                    phone: "809-123-4567",
-                    cedula: "001-1234567-8",
-                    balance: 5000,
-                    earnings: 250,
-                    referralEarnings: 0,
-                    status: "approved",
-                    registrationDate: new Date().toISOString(),
-                    referralCode: "TEST001"
-                },
-                {
-                    email: "usuario2@ejemplo.com", 
-                    phone: "809-234-5678",
-                    cedula: "001-2345678-9", 
-                    balance: 10000,
-                    earnings: 500,
-                    referralEarnings: 0,
-                    status: "pending",
-                    registrationDate: new Date().toISOString(),
-                    referralCode: "TEST002"
-                }
-            ];
-
-            testUsers.forEach((user, index) => {
-                db.collection('users').add(user);
-            });
+        // Función para cargar el código de referido desde la URL
+        function loadReferralCodeFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
             
-            alert('Usuarios de prueba agregados correctamente.');
+            if (refCode) {
+                document.getElementById('regReferralCode').value = refCode;
+            }
         }
+
+        // Llamar a la función cuando se carga la página
+        window.addEventListener('load', loadReferralCodeFromURL);
+
+        // Inicializar configuración de pagos cuando se carga la página
+        window.addEventListener('load', function() {
+            loadPaymentSettings().then(() => {
+                console.log('Configuración de pagos cargada correctamente');
+            });
+        });
 
         // Descomenta la siguiente línea para agregar usuarios de prueba (ejecutar solo una vez)
         // addTestUsers();
