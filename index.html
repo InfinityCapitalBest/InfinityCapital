@@ -2389,7 +2389,26 @@
                             if (!currentUser.pendingEarnings) currentUser.pendingEarnings = [];
                             currentUser.pendingEarnings.push(pendingEarning);
                             
+                            // Actualizar la inversión con las ganancias acumuladas
+                            const updatedInvestments = [...currentUser.investments];
+                            updatedInvestments[investmentIndex].earnings += dailyEarning;
+                            
+                            // Actualizar en Firestore
+                            return db.collection('users').doc(currentUser.uid).update({
+                                investments: updatedInvestments
+                            });
+                        })
+                        .then(() => {
+                            // Actualizar usuario local
+                            currentUser.investments[investmentIndex].earnings += dailyEarning;
                             console.log('Ganancia diaria generada para inversión:', investmentId);
+                            
+                            // Mostrar notificación
+                            alert(`¡Felicidades! Has ganado RD$ ${dailyEarning.toFixed(2)} de tu inversión en el Nivel ${plan}.`);
+                            
+                            // Actualizar displays
+                            updateAmountsDisplay();
+                            updateInvestmentHistory();
                         })
                         .catch((error) => {
                             console.error("Error al guardar ganancia pendiente:", error);
@@ -3591,7 +3610,7 @@
             return db.collection('users').doc(userId).delete()
                 .then(() => {
                     console.log('Usuario eliminado exitosamente.');
-                })
+                    })
                 .catch((error) => {
                     console.error("Error al eliminar usuario:", error);
                     throw error;
