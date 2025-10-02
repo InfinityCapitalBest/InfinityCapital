@@ -1052,6 +1052,7 @@
                             <th>Usuario</th>
                             <th>Tipo</th>
                             <th>Monto</th>
+                            <th>Wallet/Cuenta</th>
                             <th>Fecha</th>
                             <th>Estado</th>
                         </tr>
@@ -1277,46 +1278,11 @@
         <div class="modal-content">
             <h3>Retirar Fondos</h3>
             <p>Saldo disponible: <strong>RD$ <span id="availableWithdraw">0.00</span></strong></p>
+            <p>Ganancia disponible: <strong>RD$ <span id="availableEarnings" style="color: var(--success);">0.00</span></strong></p>
             
             <div class="modal-buttons">
-                <button class="btn" id="showWithdrawCrypto">Retirar con Criptomonedas</button>
-                <button class="btn" id="showWithdrawBank">Retirar con Banco</button>
-            </div>
-            
-            <!-- Opciones de Criptomonedas para Retiro -->
-            <div id="withdrawCryptoOptions" class="crypto-options">
-                <h4>Selecciona una criptomoneda:</h4>
-                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
-                
-                <!-- Información de Wallet para Retiro -->
-                <div id="withdrawCryptoInfo" class="wallet-info">
-                    <h4>Ingresa tu Wallet</h4>
-                    <div class="wallet-address">
-                        <input type="text" id="withdrawCryptoWallet" placeholder="Pega tu dirección de wallet aquí">
-                    </div>
-                    <div class="amount-input">
-                        <input type="number" id="withdrawCryptoAmount" placeholder="Monto a retirar (USD)">
-                    </div>
-                    <button class="btn" id="submitWithdrawCrypto">Solicitar Retiro</button>
-                </div>
-            </div>
-            
-            <!-- Opciones de Banco para Retiro -->
-            <div id="withdrawBankOptions" class="bank-options">
-                <h4>Selecciona un banco:</h4>
-                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
-                
-                <!-- Información de Cuenta para Retiro -->
-                <div id="withdrawBankInfo" class="bank-info">
-                    <h4>Información de Cuenta</h4>
-                    <div class="bank-account">
-                        <input type="text" id="withdrawBankAccount" placeholder="Ingresa tu número de cuenta">
-                    </div>
-                    <div class="amount-input">
-                        <input type="number" id="withdrawBankAmount" placeholder="Monto a retirar (RD$)">
-                    </div>
-                    <button class="btn" id="submitWithdrawBank">Solicitar Retiro</button>
-                </div>
+                <button class="btn" id="showWithdrawBalance">Retirar desde Saldo</button>
+                <button class="btn" id="showWithdrawEarnings">Retirar desde Ganancia</button>
             </div>
             
             <button class="btn" style="margin-top: 15px; background: #666;" id="closeWithdrawModal">Cancelar</button>
@@ -1611,18 +1577,8 @@
         // Elementos de retiro
         const withdrawModal = document.getElementById('withdrawModal');
         const closeWithdrawModal = document.getElementById('closeWithdrawModal');
-        const showWithdrawCrypto = document.getElementById('showWithdrawCrypto');
-        const showWithdrawBank = document.getElementById('showWithdrawBank');
-        const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
-        const withdrawBankOptions = document.getElementById('withdrawBankOptions');
-        const withdrawCryptoInfo = document.getElementById('withdrawCryptoInfo');
-        const withdrawBankInfo = document.getElementById('withdrawBankInfo');
-        const withdrawCryptoWallet = document.getElementById('withdrawCryptoWallet');
-        const withdrawCryptoAmount = document.getElementById('withdrawCryptoAmount');
-        const submitWithdrawCrypto = document.getElementById('submitWithdrawCrypto');
-        const withdrawBankAccount = document.getElementById('withdrawBankAccount');
-        const withdrawBankAmount = document.getElementById('withdrawBankAmount');
-        const submitWithdrawBank = document.getElementById('submitWithdrawBank');
+        const showWithdrawBalance = document.getElementById('showWithdrawBalance');
+        const showWithdrawEarnings = document.getElementById('showWithdrawEarnings');
         
         // Otros elementos
         const countersContainer = document.getElementById('countersContainer');
@@ -1903,6 +1859,7 @@
         withdrawBtnMenu.addEventListener('click', function(e) {
             e.preventDefault();
             document.getElementById('availableWithdraw').textContent = currentUser.balance.toFixed(2);
+            document.getElementById('availableEarnings').textContent = currentUser.earnings.toFixed(2);
             withdrawModal.style.display = 'flex';
             resetWithdrawModal();
             
@@ -2130,8 +2087,106 @@
             });
         });
 
-        // Sistema de Retiro - Criptomonedas
-        showWithdrawCrypto.addEventListener('click', function() {
+        // Sistema de Retiro - Mostrar opciones desde Saldo
+        showWithdrawBalance.addEventListener('click', function() {
+            showWithdrawOptions('balance');
+        });
+
+        // Sistema de Retiro - Mostrar opciones desde Ganancia
+        showWithdrawEarnings.addEventListener('click', function() {
+            showWithdrawOptions('earnings');
+        });
+
+        // FUNCIÓN PARA MOSTRAR OPCIONES DE RETIRO DESDE SALDO O GANANCIA
+        function showWithdrawOptions(source) {
+            const withdrawSource = source; // 'balance' o 'earnings'
+            const availableAmount = withdrawSource === 'balance' ? currentUser.balance : currentUser.earnings;
+            
+            const optionsHTML = `
+                <div class="modal-buttons">
+                    <button class="btn" id="showWithdrawCrypto">Retirar con Criptomonedas</button>
+                    <button class="btn" id="showWithdrawBank">Retirar con Banco</button>
+                </div>
+                
+                <!-- Opciones de Criptomonedas para Retiro -->
+                <div id="withdrawCryptoOptions" class="crypto-options">
+                    <h4>Selecciona una criptomoneda:</h4>
+                    <!-- Las opciones se cargarán dinámicamente -->
+                    
+                    <div id="withdrawCryptoInfo" class="wallet-info">
+                        <h4>Ingresa tu Wallet</h4>
+                        <div class="wallet-address">
+                            <input type="text" id="withdrawCryptoWallet" placeholder="Pega tu dirección de wallet aquí">
+                        </div>
+                        <div class="amount-input">
+                            <input type="number" id="withdrawCryptoAmount" placeholder="Monto a retirar (USD)" max="${availableAmount}">
+                            <small>Monto máximo: RD$ ${availableAmount.toFixed(2)}</small>
+                        </div>
+                        <button class="btn" id="submitWithdrawCrypto" data-source="${withdrawSource}">Solicitar Retiro</button>
+                    </div>
+                </div>
+                
+                <!-- Opciones de Banco para Retiro -->
+                <div id="withdrawBankOptions" class="bank-options">
+                    <h4>Selecciona un banco:</h4>
+                    <!-- Las opciones se cargarán dinámicamente -->
+                    
+                    <div id="withdrawBankInfo" class="bank-info">
+                        <h4>Información de Cuenta</h4>
+                        <div class="bank-account">
+                            <input type="text" id="withdrawBankAccount" placeholder="Ingresa tu número de cuenta">
+                        </div>
+                        <div class="amount-input">
+                            <input type="number" id="withdrawBankAmount" placeholder="Monto a retirar (RD$)" max="${availableAmount}">
+                            <small>Monto máximo: RD$ ${availableAmount.toFixed(2)}</small>
+                        </div>
+                        <button class="btn" id="submitWithdrawBank" data-source="${withdrawSource}">Solicitar Retiro</button>
+                    </div>
+                </div>
+                
+                <button class="btn" style="margin-top: 15px; background: #666;" id="closeWithdrawModal">Cancelar</button>
+            `;
+            
+            document.querySelector('#withdrawModal .modal-content').innerHTML = `
+                <h3>Retirar ${withdrawSource === 'balance' ? 'desde Saldo' : 'desde Ganancia'}</h3>
+                ${optionsHTML}
+            `;
+            
+            // Re-configurar event listeners
+            setupWithdrawModalEvents(withdrawSource);
+        }
+
+        // CONFIGURAR EVENTOS DEL MODAL DE RETIRO
+        function setupWithdrawModalEvents(source) {
+            const withdrawSource = source;
+            
+            document.getElementById('showWithdrawCrypto').addEventListener('click', function() {
+                showWithdrawCryptoOptions(withdrawSource);
+            });
+            
+            document.getElementById('showWithdrawBank').addEventListener('click', function() {
+                showWithdrawBankOptions(withdrawSource);
+            });
+            
+            document.getElementById('submitWithdrawCrypto').addEventListener('click', function() {
+                submitWithdrawCryptoRequest(withdrawSource);
+            });
+            
+            document.getElementById('submitWithdrawBank').addEventListener('click', function() {
+                submitWithdrawBankRequest(withdrawSource);
+            });
+            
+            document.getElementById('closeWithdrawModal').addEventListener('click', function() {
+                withdrawModal.style.display = 'none';
+                resetWithdrawModal();
+            });
+        }
+
+        // Mostrar opciones de criptomonedas para retiro
+        function showWithdrawCryptoOptions(source) {
+            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
+            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
+            
             withdrawCryptoOptions.style.display = 'block';
             withdrawBankOptions.style.display = 'none';
             
@@ -2162,14 +2217,17 @@
                         this.classList.add('active');
                         
                         // Mostrar información de wallet para retiro
-                        withdrawCryptoInfo.style.display = 'block';
+                        document.getElementById('withdrawCryptoInfo').style.display = 'block';
                     });
                 });
             });
-        });
+        }
 
-        // Sistema de Retiro - Bancos
-        showWithdrawBank.addEventListener('click', function() {
+        // Mostrar opciones de bancos para retiro
+        function showWithdrawBankOptions(source) {
+            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
+            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
+            
             withdrawBankOptions.style.display = 'block';
             withdrawCryptoOptions.style.display = 'none';
             
@@ -2178,6 +2236,12 @@
                 // Limpiar opciones existentes
                 const existingOptions = withdrawBankOptions.querySelectorAll('.bank-option');
                 existingOptions.forEach(option => option.remove());
+                
+                // Verificar si hay cuentas bancarias
+                if (Object.keys(bankAccounts).length === 0) {
+                    withdrawBankOptions.innerHTML += '<p>No hay cuentas bancarias disponibles</p>';
+                    return;
+                }
                 
                 // Agregar opciones dinámicamente
                 Object.keys(bankAccounts).forEach((bank) => {
@@ -2200,16 +2264,16 @@
                         this.classList.add('active');
                         
                         // Mostrar información de cuenta para retiro
-                        withdrawBankInfo.style.display = 'block';
+                        document.getElementById('withdrawBankInfo').style.display = 'block';
                     });
                 });
             });
-        });
+        }
 
-        // Enviar retiro con criptomonedas
-        submitWithdrawCrypto.addEventListener('click', function() {
-            const amount = parseFloat(withdrawCryptoAmount.value);
-            const wallet = withdrawCryptoWallet.value;
+        // FUNCIÓN PARA RETIRO CON CRIPTOMONEDAS DESDE SALDO O GANANCIA
+        function submitWithdrawCryptoRequest(source) {
+            const amount = parseFloat(document.getElementById('withdrawCryptoAmount').value);
+            const wallet = document.getElementById('withdrawCryptoWallet').value.trim();
             const selectedCrypto = document.querySelector('#withdrawCryptoOptions .crypto-option.active');
             
             if (!selectedCrypto) {
@@ -2227,8 +2291,9 @@
                 return;
             }
             
-            if (amount > currentUser.balance) {
-                alert('Saldo insuficiente para realizar este retiro');
+            const availableAmount = source === 'balance' ? currentUser.balance : currentUser.earnings;
+            if (amount > availableAmount) {
+                alert(`Monto insuficiente en ${source === 'balance' ? 'saldo' : 'ganancia'}`);
                 return;
             }
             
@@ -2242,7 +2307,9 @@
                 wallet: wallet,
                 amount: amount,
                 status: 'pending',
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                userWallet: wallet,
+                source: source // 'balance' o 'earnings'
             };
             
             // Guardar en Firestore
@@ -2250,7 +2317,7 @@
                 withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
             })
             .then(() => {
-                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                alert(`Solicitud de retiro desde ${source === 'balance' ? 'saldo' : 'ganancia'} enviada. Estará pendiente hasta ser aprobada por el administrador.`);
                 withdrawModal.style.display = 'none';
                 resetWithdrawModal();
                 updateRequestsStatus();
@@ -2259,12 +2326,12 @@
                 console.error("Error al enviar solicitud de retiro:", error);
                 alert('Error al enviar la solicitud: ' + error.message);
             });
-        });
+        }
 
-        // Enviar retiro con banco
-        submitWithdrawBank.addEventListener('click', function() {
-            const amount = parseFloat(withdrawBankAmount.value);
-            const account = withdrawBankAccount.value;
+        // FUNCIÓN PARA RETIRO CON BANCO DESDE SALDO O GANANCIA
+        function submitWithdrawBankRequest(source) {
+            const amount = parseFloat(document.getElementById('withdrawBankAmount').value);
+            const account = document.getElementById('withdrawBankAccount').value.trim();
             const selectedBank = document.querySelector('#withdrawBankOptions .bank-option.active');
             
             if (!selectedBank) {
@@ -2277,13 +2344,14 @@
                 return;
             }
             
-            if (!amount || amount <= 0) {
+            if (!amount || amount <= 0 || isNaN(amount)) {
                 alert('Por favor ingresa un monto válido');
                 return;
             }
             
-            if (amount > currentUser.balance) {
-                alert('Saldo insuficiente para realizar este retiro');
+            const availableAmount = source === 'balance' ? currentUser.balance : currentUser.earnings;
+            if (amount > availableAmount) {
+                alert(`Monto insuficiente en ${source === 'balance' ? 'saldo' : 'ganancia'}`);
                 return;
             }
             
@@ -2297,7 +2365,9 @@
                 account: account,
                 amount: amount,
                 status: 'pending',
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                userWallet: account,
+                source: source // 'balance' o 'earnings'
             };
             
             // Guardar en Firestore
@@ -2305,7 +2375,7 @@
                 withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
             })
             .then(() => {
-                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
+                alert(`Solicitud de retiro desde ${source === 'balance' ? 'saldo' : 'ganancia'} enviada. Estará pendiente hasta ser aprobada por el administrador.`);
                 withdrawModal.style.display = 'none';
                 resetWithdrawModal();
                 updateRequestsStatus();
@@ -2314,7 +2384,7 @@
                 console.error("Error al enviar solicitud de retiro:", error);
                 alert('Error al enviar la solicitud: ' + error.message);
             });
-        });
+        }
 
         // Resetear modal de recarga
         function resetRechargeModal() {
@@ -2336,14 +2406,15 @@
 
         // Resetear modal de retiro
         function resetWithdrawModal() {
-            withdrawCryptoOptions.style.display = 'none';
-            withdrawBankOptions.style.display = 'none';
-            withdrawCryptoInfo.style.display = 'none';
-            withdrawBankInfo.style.display = 'none';
-            withdrawCryptoAmount.value = '';
-            withdrawBankAmount.value = '';
-            withdrawCryptoWallet.value = '';
-            withdrawBankAccount.value = '';
+            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
+            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
+            const withdrawCryptoInfo = document.getElementById('withdrawCryptoInfo');
+            const withdrawBankInfo = document.getElementById('withdrawBankInfo');
+            
+            if (withdrawCryptoOptions) withdrawCryptoOptions.style.display = 'none';
+            if (withdrawBankOptions) withdrawBankOptions.style.display = 'none';
+            if (withdrawCryptoInfo) withdrawCryptoInfo.style.display = 'none';
+            if (withdrawBankInfo) withdrawBankInfo.style.display = 'none';
             
             // Remover clases active
             document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
@@ -2365,14 +2436,12 @@
             resetWithdrawModal();
         });
 
-        // FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS SIN APROBACIÓN
+        // FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS A "GANANCIA" (RETIRABLE)
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
-            // Verificar si ya existe un contador para esta inversión
             if (investmentCounters[investmentId]) {
                 clearInterval(investmentCounters[investmentId]);
             }
 
-            // Crear elemento de contador si no existe
             let counterElement = document.getElementById(`counter-${investmentId}`);
             if (!counterElement) {
                 counterElement = document.createElement('div');
@@ -2386,49 +2455,38 @@
                 countersContainer.appendChild(counterElement);
             }
 
-            // Calcular el tiempo transcurrido desde el inicio
-            const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // en segundos
-            const remainingTime = 24 * 60 * 60 - (elapsedTime % (24 * 60 * 60)); // 24 horas - tiempo transcurrido
-            
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            const remainingTime = 24 * 60 * 60 - (elapsedTime % (24 * 60 * 60));
             let timeLeft = remainingTime > 0 ? remainingTime : 24 * 60 * 60;
 
-            // Función para actualizar el contador
             function updateCounter() {
                 timeLeft--;
                 
                 if (timeLeft <= 0) {
-                    // GANANCIA AUTOMÁTICA SIN APROBACIÓN
                     const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
                     if (investmentIndex !== -1) {
                         const dailyEarning = currentUser.investments[investmentIndex].amount * (parseInt(plan) / 100);
                         
-                        // ACTUALIZAR SALDO DIRECTAMENTE - SIN APROBACIÓN
+                        // GANANCIAS VAN A "GANANCIA" (RETIRABLE)
                         db.collection('users').doc(currentUser.uid).update({
-                            balance: firebase.firestore.FieldValue.increment(dailyEarning),
                             earnings: firebase.firestore.FieldValue.increment(dailyEarning)
                         })
                         .then(() => {
-                            // Actualizar usuario local
-                            currentUser.balance += dailyEarning;
                             currentUser.earnings += dailyEarning;
                             currentUser.investments[investmentIndex].earnings += dailyEarning;
                             
-                            console.log('Ganancia diaria aplicada automáticamente:', investmentId);
-                            
-                            // Actualizar displays
+                            console.log('Ganancia diaria agregada a GANANCIA (retirable):', dailyEarning);
                             updateAmountsDisplay();
                             updateInvestmentHistory();
                         })
                         .catch((error) => {
-                            console.error("Error al aplicar ganancia automática:", error);
+                            console.error("Error al aplicar ganancia:", error);
                         });
                     }
                     
-                    // Reiniciar contador
                     timeLeft = 24 * 60 * 60;
                 }
                 
-                // Actualizar display del contador
                 const hours = Math.floor(timeLeft / 3600);
                 const minutes = Math.floor((timeLeft % 3600) / 60);
                 const seconds = timeLeft % 60;
@@ -2440,8 +2498,7 @@
                 }
             }
 
-            // Iniciar el intervalo y guardar referencia
-            updateCounter(); // Ejecutar inmediatamente para mostrar el tiempo correcto
+            updateCounter();
             investmentCounters[investmentId] = setInterval(updateCounter, 1000);
         }
 
@@ -2473,14 +2530,14 @@
                     
                     // Crear nueva inversión con tiempo de inicio
                     const investmentId = Date.now().toString();
-                    const investmentStartTime = Date.now(); // Tiempo de inicio de la inversión
+                    const investmentStartTime = Date.now();
                     
                     const investment = {
                         id: investmentId,
                         plan: plan,
                         amount: amount,
                         date: new Date().toLocaleDateString('es-DO'),
-                        startTime: investmentStartTime, // Guardar tiempo de inicio
+                        startTime: investmentStartTime,
                         earnings: 0,
                         lastEarningDate: new Date().getTime()
                     };
@@ -2501,7 +2558,7 @@
                             processInvestmentReferralCommission(currentUser.referredBy, amount, currentUser.email);
                         }
                         
-                        // Iniciar contador para esta inversión
+                        // Iniciar contador para ganancias diarias
                         startInvestmentCounter(investmentId, plan, amount, investmentStartTime);
                         
                         // Actualizar displays
@@ -2534,21 +2591,23 @@
                         const commission = investmentAmount * 0.08;
                         
                         // Actualizar referido en la lista del referidor
-                        const updatedReferrals = referrerData.referrals.map(ref => {
-                            if (ref.email === investorEmail) {
-                                return {
-                                    ...ref,
+                        const updatedReferrals = referrerData.referrals ? [...referrerData.referrals] : [];
+                        let referralExists = false;
+                        
+                        for (let i = 0; i < updatedReferrals.length; i++) {
+                            if (updatedReferrals[i].email === investorEmail) {
+                                updatedReferrals[i] = {
+                                    ...updatedReferrals[i],
                                     hasInvested: true,
                                     investmentAmount: investmentAmount,
                                     commission: commission,
                                     investmentDate: new Date().toISOString()
                                 };
+                                referralExists = true;
+                                break;
                             }
-                            return ref;
-                        });
+                        }
                         
-                        // Si el referido no estaba en la lista, agregarlo
-                        let referralExists = updatedReferrals.some(ref => ref.email === investorEmail);
                         if (!referralExists) {
                             updatedReferrals.push({
                                 email: investorEmail,
@@ -2560,16 +2619,15 @@
                             });
                         }
                         
-                        // APLICAR COMISIÓN AUTOMÁTICAMENTE AL REFERIDOR
+                        // SOLO sumar a referralEarnings, NO al balance
                         return db.collection('users').doc(referrerDoc.id).update({
                             referrals: updatedReferrals,
-                            balance: firebase.firestore.FieldValue.increment(commission),
                             referralEarnings: firebase.firestore.FieldValue.increment(commission)
                         });
                     }
                 })
                 .then(() => {
-                    console.log('Comisión por referido aplicada automáticamente');
+                    console.log('Comisión por referido aplicada correctamente (solo en referralEarnings)');
                 })
                 .catch((error) => {
                     console.error("Error al procesar comisión por referido:", error);
@@ -2580,8 +2638,8 @@
         function updateAmountsDisplay() {
             if (currentUser) {
                 balanceAmount.textContent = currentUser.balance.toFixed(2);
-                earningsAmount.textContent = currentUser.earnings.toFixed(2);
-                referralAmount.textContent = currentUser.referralEarnings.toFixed(2);
+                earningsAmount.textContent = (currentUser.earnings || 0).toFixed(2);
+                referralAmount.textContent = (currentUser.referralEarnings || 0).toFixed(2);
             }
         }
 
@@ -2593,9 +2651,9 @@
                 userCedula.textContent = currentUser.cedula;
                 userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
                 userBalance.textContent = currentUser.balance.toFixed(2);
-                userEarnings.textContent = currentUser.earnings.toFixed(2);
+                userEarnings.textContent = (currentUser.earnings || 0).toFixed(2);
                 
-                // Actualizar enlace de referidos CON EL FORMATO CORRECTO
+                // Actualizar enlace de referidos
                 referralLink.value = `https://trading-ai-dubai-v2.web.app/?ref=${currentUser.referralCode}`;
                 
                 // Cargar inversiones activas
@@ -2610,7 +2668,6 @@
                 
                 // Reiniciar contadores para inversiones existentes
                 activeInvestments.forEach(inv => {
-                    // Verificar si la inversión tiene tiempo de inicio, si no usar tiempo actual
                     const startTime = inv.startTime || Date.now();
                     startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
                 });
@@ -2740,9 +2797,18 @@
                         statusText = 'Rechazado';
                     }
                     
+                    // Mostrar información de wallet/cuenta
+                    let walletInfo = '';
+                    if (request.type === 'crypto') {
+                        walletInfo = `<p><strong>Wallet:</strong> ${request.userWallet || request.wallet}</p>`;
+                    } else {
+                        walletInfo = `<p><strong>Cuenta:</strong> ${request.userWallet || request.account}</p>`;
+                    }
+                    
                     requestItem.innerHTML = `
-                        <h4>Retiro ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</h4>
+                        <h4>Retiro ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'} (${request.source === 'balance' ? 'Saldo' : 'Ganancia'})</h4>
                         <p><strong>Monto:</strong> ${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</p>
+                        ${walletInfo}
                         <p><strong>Fecha:</strong> ${new Date(request.date).toLocaleDateString('es-DO')}</p>
                         <p><strong>Estado:</strong> <span style="color: ${statusColor};">${statusText}</span></p>
                     `;
@@ -2806,16 +2872,38 @@
 
         // Cargar wallets de criptomonedas para usuarios
         function loadCryptoWalletsForUser() {
-            return loadPaymentSettings().then(settings => {
-                return settings.cryptoWallets || {};
-            });
+            return db.collection('paymentSettings').doc('config').get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const settings = doc.data();
+                        return settings.cryptoWallets || {};
+                    } else {
+                        console.log("No se encontró configuración de pagos");
+                        return {};
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error al cargar wallets de criptomonedas:", error);
+                    return {};
+                });
         }
 
         // Cargar cuentas bancarias para usuarios
         function loadBankAccountsForUser() {
-            return loadPaymentSettings().then(settings => {
-                return settings.bankAccounts || {};
-            });
+            return db.collection('paymentSettings').doc('config').get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const settings = doc.data();
+                        return settings.bankAccounts || {};
+                    } else {
+                        console.log("No se encontró configuración de pagos");
+                        return {};
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error al cargar cuentas bancarias:", error);
+                    return {};
+                });
         }
 
         // Renderizar wallets de criptomonedas en el panel de administración
@@ -3032,10 +3120,6 @@
             });
         }
 
-        // =============================================
-        // FIN DE FUNCIONES PARA GESTIÓN DE PAGOS
-        // =============================================
-
         // Panel de administración - Tabs
         adminTabs.forEach(tab => {
             tab.addEventListener('click', function() {
@@ -3222,11 +3306,21 @@
                                 if (request.status === 'pending') {
                                     hasPendingRequests = true;
                                     const row = document.createElement('tr');
+                                    
+                                    // Mostrar información de wallet/cuenta según el tipo
+                                    let walletInfo = '';
+                                    if (request.type === 'crypto') {
+                                        walletInfo = `${request.crypto}: ${request.userWallet || request.wallet}`;
+                                    } else {
+                                        walletInfo = `${request.bank}: ${request.userWallet || request.account}`;
+                                    }
+                                    
                                     row.innerHTML = `
                                         <td><input type="checkbox" class="admin-checkbox withdraw-checkbox" data-userid="${doc.id}" data-requestid="${request.id}"></td>
                                         <td>${user.email}</td>
                                         <td>${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</td>
                                         <td>${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</td>
+                                        <td>${walletInfo}</td>
                                         <td>${new Date(request.date).toLocaleDateString('es-DO')}</td>
                                         <td>Pendiente</td>
                                     `;
@@ -3237,7 +3331,7 @@
                     });
                     
                     if (!hasPendingRequests) {
-                        adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay solicitudes de retiro pendientes</td></tr>';
+                        adminWithdrawTable.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay solicitudes de retiro pendientes</td></tr>';
                     }
                     
                     // Configurar checkbox de selección múltiple
@@ -3250,7 +3344,7 @@
                 })
                 .catch((error) => {
                     console.error("Error al cargar solicitudes de retiro:", error);
-                    adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
+                    adminWithdrawTable.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
                 });
         }
 
@@ -3502,15 +3596,23 @@
                         
                         if (requestIndex !== -1) {
                             if (action === 'approve') {
-                                // Aprobar retiro - restar saldo
+                                // Aprobar retiro - restar del source correcto
                                 const amount = withdrawRequests[requestIndex].amount;
+                                const source = withdrawRequests[requestIndex].source || 'balance';
                                 withdrawRequests[requestIndex].status = 'approved';
                                 
-                                // Actualizar usuario
-                                return db.collection('users').doc(userId).update({
-                                    withdrawRequests: withdrawRequests,
-                                    balance: firebase.firestore.FieldValue.increment(-amount)
-                                });
+                                // Actualizar usuario - restar del source correcto
+                                const updateData = {
+                                    withdrawRequests: withdrawRequests
+                                };
+                                
+                                if (source === 'balance') {
+                                    updateData.balance = firebase.firestore.FieldValue.increment(-amount);
+                                } else {
+                                    updateData.earnings = firebase.firestore.FieldValue.increment(-amount);
+                                }
+                                
+                                return db.collection('users').doc(userId).update(updateData);
                             } else {
                                 // Rechazar retiro
                                 withdrawRequests[requestIndex].status = 'rejected';
@@ -3608,9 +3710,6 @@
                 console.log('Configuración de pagos cargada correctamente');
             });
         });
-
-        // Descomenta la siguiente línea para agregar usuarios de prueba (ejecutar solo una vez)
-        // addTestUsers();
     </script>
 </body>
 </html>
