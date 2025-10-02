@@ -1719,7 +1719,7 @@
             registerScreen.style.display = 'flex';
         });
 
-        // Registro de usuario
+        // Registro de usuario CON GANANCIAS POR REFERIDOS AUTOMÁTICAS
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -1733,6 +1733,7 @@
             auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
+                    const userReferralCode = generateReferralCode();
                     
                     // Crear perfil de usuario en Firestore
                     return db.collection('users').doc(user.uid).set({
@@ -1749,11 +1750,15 @@
                         referrals: [],
                         rechargeRequests: [],
                         withdrawRequests: [],
-                        pendingEarnings: [],
-                        pendingReferrals: [],
-                        referralCode: generateReferralCode(),
-                        referredBy: referralCode || null // Guardar el código de referido si existe
+                        referralCode: userReferralCode,
+                        referredBy: referralCode || null
                     });
+                })
+                .then(() => {
+                    // PROCESAR COMISIÓN POR REFERIDO SI EXISTE CÓDIGO
+                    if (referralCode) {
+                        return processReferralCommission(referralCode, email);
+                    }
                 })
                 .then(() => {
                     alert('Registro exitoso. Ahora puede iniciar sesión.');
@@ -1766,6 +1771,32 @@
                     alert('Error en el registro: ' + error.message);
                 });
         });
+
+        // Función para procesar comisión por referido
+        function processReferralCommission(referralCode, newUserEmail) {
+            // Buscar usuario que refirió
+            return db.collection('users').where('referralCode', '==', referralCode).get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        const referrerDoc = querySnapshot.docs[0];
+                        const referrerData = referrerDoc.data();
+                        
+                        // Agregar referido a la lista del referidor
+                        const newReferral = {
+                            email: newUserEmail,
+                            registrationDate: new Date().toISOString(),
+                            hasInvested: false
+                        };
+                        
+                        return db.collection('users').doc(referrerDoc.id).update({
+                            referrals: firebase.firestore.FieldValue.arrayUnion(newReferral)
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error al procesar referido:", error);
+                });
+        }
 
         // Inicio de sesión
         loginForm.addEventListener('submit', function(e) {
@@ -2334,7 +2365,7 @@
             resetWithdrawModal();
         });
 
-        // FUNCIÓN CORREGIDA PARA INICIAR CONTADORES DE INVERSIÓN
+        // FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS SIN APROBACIÓN
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
             // Verificar si ya existe un contador para esta inversión
             if (investmentCounters[investmentId]) {
@@ -2366,52 +2397,30 @@
                 timeLeft--;
                 
                 if (timeLeft <= 0) {
-                    // AGREGAR GANANCIA PENDIENTE DE APROBACIÓN
+                    // GANANCIA AUTOMÁTICA SIN APROBACIÓN
                     const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
                     if (investmentIndex !== -1) {
                         const dailyEarning = currentUser.investments[investmentIndex].amount * (parseInt(plan) / 100);
                         
-                        // Crear ganancia pendiente
-                        const pendingEarning = {
-                            id: Date.now().toString(),
-                            investmentId: investmentId,
-                            amount: dailyEarning,
-                            date: new Date().toISOString(),
-                            status: 'pending'
-                        };
-                        
-                        // Actualizar Firestore
+                        // ACTUALIZAR SALDO DIRECTAMENTE - SIN APROBACIÓN
                         db.collection('users').doc(currentUser.uid).update({
-                            pendingEarnings: firebase.firestore.FieldValue.arrayUnion(pendingEarning)
+                            balance: firebase.firestore.FieldValue.increment(dailyEarning),
+                            earnings: firebase.firestore.FieldValue.increment(dailyEarning)
                         })
                         .then(() => {
                             // Actualizar usuario local
-                            if (!currentUser.pendingEarnings) currentUser.pendingEarnings = [];
-                            currentUser.pendingEarnings.push(pendingEarning);
-                            
-                            // Actualizar la inversión con las ganancias acumuladas
-                            const updatedInvestments = [...currentUser.investments];
-                            updatedInvestments[investmentIndex].earnings += dailyEarning;
-                            
-                            // Actualizar en Firestore
-                            return db.collection('users').doc(currentUser.uid).update({
-                                investments: updatedInvestments
-                            });
-                        })
-                        .then(() => {
-                            // Actualizar usuario local
+                            currentUser.balance += dailyEarning;
+                            currentUser.earnings += dailyEarning;
                             currentUser.investments[investmentIndex].earnings += dailyEarning;
-                            console.log('Ganancia diaria generada para inversión:', investmentId);
                             
-                            // Mostrar notificación
-                            alert(`¡Felicidades! Has ganado RD$ ${dailyEarning.toFixed(2)} de tu inversión en el Nivel ${plan}.`);
+                            console.log('Ganancia diaria aplicada automáticamente:', investmentId);
                             
                             // Actualizar displays
                             updateAmountsDisplay();
                             updateInvestmentHistory();
                         })
                         .catch((error) => {
-                            console.error("Error al guardar ganancia pendiente:", error);
+                            console.error("Error al aplicar ganancia automática:", error);
                         });
                     }
                     
@@ -2436,7 +2445,7 @@
             investmentCounters[investmentId] = setInterval(updateCounter, 1000);
         }
 
-        // Botones de inversión
+        // Botones de inversión CON GANANCIAS POR REFERIDOS AUTOMÁTICAS
         investButtons.forEach(button => {
             button.addEventListener('click', function() {
                 if (!currentUser || currentUser.status !== "approved") {
@@ -2487,6 +2496,11 @@
                         if (!currentUser.investments) currentUser.investments = [];
                         currentUser.investments.push(investment);
                         
+                        // PROCESAR COMISIÓN POR REFERIDO AUTOMÁTICAMENTE
+                        if (currentUser.referredBy) {
+                            processInvestmentReferralCommission(currentUser.referredBy, amount, currentUser.email);
+                        }
+                        
                         // Iniciar contador para esta inversión
                         startInvestmentCounter(investmentId, plan, amount, investmentStartTime);
                         
@@ -2507,6 +2521,61 @@
             });
         });
 
+        // Función para procesar comisión por inversión de referido
+        function processInvestmentReferralCommission(referralCode, investmentAmount, investorEmail) {
+            // Buscar usuario que refirió
+            return db.collection('users').where('referralCode', '==', referralCode).get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        const referrerDoc = querySnapshot.docs[0];
+                        const referrerData = referrerDoc.data();
+                        
+                        // Calcular comisión (8% de la inversión)
+                        const commission = investmentAmount * 0.08;
+                        
+                        // Actualizar referido en la lista del referidor
+                        const updatedReferrals = referrerData.referrals.map(ref => {
+                            if (ref.email === investorEmail) {
+                                return {
+                                    ...ref,
+                                    hasInvested: true,
+                                    investmentAmount: investmentAmount,
+                                    commission: commission,
+                                    investmentDate: new Date().toISOString()
+                                };
+                            }
+                            return ref;
+                        });
+                        
+                        // Si el referido no estaba en la lista, agregarlo
+                        let referralExists = updatedReferrals.some(ref => ref.email === investorEmail);
+                        if (!referralExists) {
+                            updatedReferrals.push({
+                                email: investorEmail,
+                                registrationDate: new Date().toISOString(),
+                                hasInvested: true,
+                                investmentAmount: investmentAmount,
+                                commission: commission,
+                                investmentDate: new Date().toISOString()
+                            });
+                        }
+                        
+                        // APLICAR COMISIÓN AUTOMÁTICAMENTE AL REFERIDOR
+                        return db.collection('users').doc(referrerDoc.id).update({
+                            referrals: updatedReferrals,
+                            balance: firebase.firestore.FieldValue.increment(commission),
+                            referralEarnings: firebase.firestore.FieldValue.increment(commission)
+                        });
+                    }
+                })
+                .then(() => {
+                    console.log('Comisión por referido aplicada automáticamente');
+                })
+                .catch((error) => {
+                    console.error("Error al procesar comisión por referido:", error);
+                });
+        }
+
         // Actualizar displays de cantidades en botones
         function updateAmountsDisplay() {
             if (currentUser) {
@@ -2526,8 +2595,8 @@
                 userBalance.textContent = currentUser.balance.toFixed(2);
                 userEarnings.textContent = currentUser.earnings.toFixed(2);
                 
-                // Actualizar enlace de referidos
-                referralLink.value = `${window.location.origin}${window.location.pathname}?ref=${currentUser.referralCode}`;
+                // Actualizar enlace de referidos CON EL FORMATO CORRECTO
+                referralLink.value = `https://trading-ai-dubai-v2.web.app/?ref=${currentUser.referralCode}`;
                 
                 // Cargar inversiones activas
                 activeInvestments = currentUser.investments || [];
@@ -2591,10 +2660,20 @@
             currentUser.referrals.forEach(referral => {
                 const referralItem = document.createElement('div');
                 referralItem.className = 'investment-item';
+                let statusHtml = '';
+                
+                if (referral.hasInvested) {
+                    statusHtml = `<p style="color: var(--success);"><strong>¡Ha invertido!</strong></p>
+                                 <p><strong>Inversión:</strong> RD$ ${referral.investmentAmount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</p>
+                                 <p><strong>Tu comisión:</strong> RD$ ${referral.commission.toFixed(2)}</p>`;
+                } else {
+                    statusHtml = '<p style="color: var(--warning);"><strong>Registrado - Esperando inversión</strong></p>';
+                }
+                
                 referralItem.innerHTML = `
                     <h4>${referral.email}</h4>
-                    <p><strong>Inversión:</strong> RD$ ${referral.investmentAmount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</p>
-                    <p><strong>Comisión:</strong> RD$ ${referral.commission.toFixed(2)}</p>
+                    <p><strong>Fecha de registro:</strong> ${new Date(referral.registrationDate).toLocaleDateString('es-DO')}</p>
+                    ${statusHtml}
                 `;
                 referralsList.appendChild(referralItem);
             });
@@ -2689,7 +2768,7 @@
         });
 
         // =============================================
-        // NUEVAS FUNCIONES PARA GESTIÓN DE PAGOS
+        // FUNCIONES PARA GESTIÓN DE PAGOS
         // =============================================
 
         // Cargar configuración de pagos desde Firestore
@@ -2954,7 +3033,7 @@
         }
 
         // =============================================
-        // FIN DE NUEVAS FUNCIONES PARA GESTIÓN DE PAGOS
+        // FIN DE FUNCIONES PARA GESTIÓN DE PAGOS
         // =============================================
 
         // Panel de administración - Tabs
@@ -3179,55 +3258,16 @@
         function loadAdminEarningsTable() {
             adminEarningsTable.innerHTML = '';
             
-            db.collection('users').get()
-                .then((querySnapshot) => {
-                    let hasPendingEarnings = false;
-                    
-                    querySnapshot.forEach((doc) => {
-                        const user = doc.data();
-                        if (user.pendingEarnings && user.pendingEarnings.length > 0) {
-                            user.pendingEarnings.forEach(earning => {
-                                if (earning.status === 'pending') {
-                                    hasPendingEarnings = true;
-                                    const row = document.createElement('tr');
-                                    row.innerHTML = `
-                                        <td><input type="checkbox" class="admin-checkbox earning-checkbox" data-userid="${doc.id}" data-earningid="${earning.id}"></td>
-                                        <td>${user.email}</td>
-                                        <td>RD$ ${earning.amount.toFixed(2)}</td>
-                                        <td>RD$ ${earning.amount.toFixed(2)}</td>
-                                        <td>${new Date(earning.date).toLocaleDateString('es-DO')}</td>
-                                        <td>Pendiente</td>
-                                    `;
-                                    adminEarningsTable.appendChild(row);
-                                }
-                            });
-                        }
-                    });
-                    
-                    if (!hasPendingEarnings) {
-                        adminEarningsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay ganancias diarias pendientes</td></tr>';
-                    }
-                    
-                    // Configurar checkbox de selección múltiple
-                    selectAllEarnings.addEventListener('change', function() {
-                        const checkboxes = document.querySelectorAll('.earning-checkbox');
-                        checkboxes.forEach(checkbox => {
-                            checkbox.checked = this.checked;
-                        });
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error al cargar ganancias diarias:", error);
-                    adminEarningsTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las ganancias</td></tr>';
-                });
+            // Ya no hay ganancias pendientes porque son automáticas
+            adminEarningsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">Las ganancias diarias ahora se aplican automáticamente</td></tr>';
         }
 
         // Cargar tabla de ganancias por referidos
         function loadAdminReferralsTable() {
             adminReferralsTable.innerHTML = '';
             
-            // Por ahora, mostramos un mensaje ya que esta funcionalidad requiere más desarrollo
-            adminReferralsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">Funcionalidad en desarrollo</td></tr>';
+            // Ya no hay ganancias por referidos pendientes porque son automáticas
+            adminReferralsTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">Las ganancias por referidos ahora se aplican automáticamente</td></tr>';
         }
 
         // Aprobar usuarios seleccionados
@@ -3412,68 +3452,6 @@
             }
         });
 
-        // Aprobar ganancias seleccionadas
-        approveSelectedEarnings.addEventListener('click', function() {
-            const selectedCheckboxes = document.querySelectorAll('.earning-checkbox:checked');
-            
-            if (selectedCheckboxes.length === 0) {
-                alert('Por favor selecciona al menos una ganancia diaria para aprobar.');
-                return;
-            }
-            
-            if (confirm(`¿Estás seguro de que deseas aprobar ${selectedCheckboxes.length} ganancia(s) diaria(s)?`)) {
-                const promises = [];
-                
-                selectedCheckboxes.forEach(checkbox => {
-                    const userId = checkbox.getAttribute('data-userid');
-                    const earningId = checkbox.getAttribute('data-earningid');
-                    
-                    promises.push(processEarningRequest(userId, earningId, 'approve'));
-                });
-                
-                Promise.all(promises)
-                    .then(() => {
-                        alert(`${selectedCheckboxes.length} ganancia(s) diaria(s) aprobada(s) correctamente.`);
-                        loadAdminEarningsTable();
-                    })
-                    .catch((error) => {
-                        console.error("Error al aprobar ganancias:", error);
-                        alert('Error al aprobar las ganancias: ' + error.message);
-                    });
-            }
-        });
-
-        // Rechazar ganancias seleccionadas
-        rejectSelectedEarnings.addEventListener('click', function() {
-            const selectedCheckboxes = document.querySelectorAll('.earning-checkbox:checked');
-            
-            if (selectedCheckboxes.length === 0) {
-                alert('Por favor selecciona al menos una ganancia diaria para rechazar.');
-                return;
-            }
-            
-            if (confirm(`¿Estás seguro de que deseas rechazar ${selectedCheckboxes.length} ganancia(s) diaria(s)?`)) {
-                const promises = [];
-                
-                selectedCheckboxes.forEach(checkbox => {
-                    const userId = checkbox.getAttribute('data-userid');
-                    const earningId = checkbox.getAttribute('data-earningid');
-                    
-                    promises.push(processEarningRequest(userId, earningId, 'reject'));
-                });
-                
-                Promise.all(promises)
-                    .then(() => {
-                        alert(`${selectedCheckboxes.length} ganancia(s) diaria(s) rechazada(s) correctamente.`);
-                        loadAdminEarningsTable();
-                    })
-                    .catch((error) => {
-                        console.error("Error al rechazar ganancias:", error);
-                        alert('Error al rechazar las ganancias: ' + error.message);
-                    });
-            }
-        });
-
         // Procesar solicitud de recarga
         function processRechargeRequest(userId, requestId, action) {
             return db.collection('users').doc(userId).get()
@@ -3548,45 +3526,6 @@
                 })
                 .catch((error) => {
                     console.error("Error al procesar solicitud de retiro:", error);
-                    throw error;
-                });
-        }
-
-        // Procesar ganancia diaria
-        function processEarningRequest(userId, earningId, action) {
-            return db.collection('users').doc(userId).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const user = doc.data();
-                        const pendingEarnings = user.pendingEarnings || [];
-                        const earningIndex = pendingEarnings.findIndex(earning => earning.id === earningId);
-                        
-                        if (earningIndex !== -1) {
-                            if (action === 'approve') {
-                                // Aprobar ganancia - agregar a earnings
-                                const amount = pendingEarnings[earningIndex].amount;
-                                pendingEarnings[earningIndex].status = 'approved';
-                                
-                                // Actualizar usuario
-                                return db.collection('users').doc(userId).update({
-                                    pendingEarnings: pendingEarnings,
-                                    earnings: firebase.firestore.FieldValue.increment(amount)
-                                });
-                            } else {
-                                // Rechazar ganancia
-                                pendingEarnings[earningIndex].status = 'rejected';
-                                return db.collection('users').doc(userId).update({
-                                    pendingEarnings: pendingEarnings
-                                });
-                            }
-                        }
-                    }
-                })
-                .then(() => {
-                    console.log(`Ganancia diaria ${action === 'approve' ? 'aprobada' : 'rechazada'} correctamente.`);
-                })
-                .catch((error) => {
-                    console.error("Error al procesar ganancia diaria:", error);
                     throw error;
                 });
         }
