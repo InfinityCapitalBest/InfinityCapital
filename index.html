@@ -1542,7 +1542,7 @@
 
         <footer>
             <div class="container">
-                <p>&copy; 2023 GOLD. Todos los derechos reservados.</p>
+                <p>&copy; 2025 GOLD. Todos los derechos reservados.</p>
                 <p>Inversiones sujetas a riesgos. Por favor lea nuestros términos y condiciones antes de invertir.</p>
             </div>
         </footer>
@@ -2500,6 +2500,12 @@
 
         // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS CON SINCRONIZACIÓN
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
+            // ✅ VALIDACIÓN EXTRA: Verificar que los datos sean válidos
+            if (!investmentId || !plan || !amount || !startTime) {
+                console.error('Datos de inversión inválidos para el contador:', { investmentId, plan, amount, startTime });
+                return;
+            }
+            
             if (investmentCounters[investmentId]) {
                 clearInterval(investmentCounters[investmentId]);
             }
@@ -2509,19 +2515,27 @@
                 counterElement = document.createElement('div');
                 counterElement.className = 'countdown-container';
                 counterElement.id = `counter-${investmentId}`;
-                counterElement.innerHTML = `
-                    <div class="countdown-title">Inversión Nivel ${plan} - RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</div>
-                    <div class="countdown" id="countdown-${investmentId}">24:00:00</div>
-                    <div class="investment-info">Próxima ganancia</div>
-                `;
                 countersContainer.appendChild(counterElement);
             }
+
+            // ✅ Actualizar HTML del contador
+            counterElement.innerHTML = `
+                <div class="countdown-title">Inversión Nivel ${plan} - RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</div>
+                <div class="countdown" id="countdown-${investmentId}">24:00:00</div>
+                <div class="investment-info">Próxima ganancia</div>
+            `;
 
             const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
             const remainingTime = 24 * 60 * 60 - (elapsedTime % (24 * 60 * 60));
             let timeLeft = remainingTime > 0 ? remainingTime : 24 * 60 * 60;
 
             function updateCounter() {
+                // ✅ Validación extra dentro del intervalo
+                if (!currentUser) {
+                    clearInterval(investmentCounters[investmentId]);
+                    return;
+                }
+                
                 timeLeft--;
                 
                 if (timeLeft <= 0) {
@@ -2778,21 +2792,32 @@
                 // Actualizar enlace de referidos
                 referralLink.value = `https://infinitycapitalbest.github.io/InfinityCapital/?ref=${currentUser.referralCode}`;
                 
-                // Cargar inversiones activas
-                activeInvestments = currentUser.investments || [];
+                // ✅ CORRECCIÓN CRÍTICA: Garantizar que activeInvestments SIEMPRE sea array válido
+                activeInvestments = [];
+                if (currentUser.investments && Array.isArray(currentUser.investments)) {
+                    activeInvestments = currentUser.investments.filter(inv => 
+                        inv && inv.id && inv.plan && inv.amount
+                    );
+                }
                 
-                // Limpiar contadores existentes antes de recrearlos
-                Object.values(investmentCounters).forEach(interval => {
-                    clearInterval(interval);
-                });
+                // ✅ CORRECCIÓN: Limpiar TODOS los contadores existentes de forma segura
+                if (investmentCounters) {
+                    Object.values(investmentCounters).forEach(interval => {
+                        if (interval) clearInterval(interval);
+                    });
+                }
                 investmentCounters = {};
                 countersContainer.innerHTML = '';
                 
-                // Reiniciar contadores para inversiones existentes
-                activeInvestments.forEach(inv => {
-                    const startTime = inv.startTime || Date.now();
-                    startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
-                });
+                // ✅ CORRECCIÓN: Iniciar contadores SOLO para inversiones válidas
+                if (activeInvestments.length > 0) {
+                    activeInvestments.forEach(inv => {
+                        if (inv && inv.id && inv.plan && inv.amount) {
+                            const startTime = inv.startTime || Date.now();
+                            startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
+                        }
+                    });
+                }
                 
                 updateAmountsDisplay();
             }
