@@ -941,6 +941,31 @@
                 flex-direction: column;
             }
         }
+
+        /* Estilos para notificaciones de ganancias */
+        .earning-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: bold;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -2473,7 +2498,7 @@
             resetWithdrawModal();
         });
 
-        // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS A "GANANCIA" (RETIRABLE)
+        // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS CON SINCRONIZACIÓN
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
             if (investmentCounters[investmentId]) {
                 clearInterval(investmentCounters[investmentId]);
@@ -2500,40 +2525,9 @@
                 timeLeft--;
                 
                 if (timeLeft <= 0) {
-                    const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
-                    if (investmentIndex !== -1) {
-                        const dailyEarning = currentUser.investments[investmentIndex].amount * (parseInt(plan) / 100);
-                        
-                        // CORREGIDO: GANANCIAS VAN A "GANANCIA" (RETIRABLE) - NO al balance
-                        db.collection('users').doc(currentUser.uid).update({
-                            earnings: firebase.firestore.FieldValue.increment(dailyEarning)
-                        })
-                        .then(() => {
-                            // Actualizar localmente
-                            currentUser.earnings += dailyEarning;
-                            currentUser.investments[investmentIndex].earnings += dailyEarning;
-                            
-                            // Actualizar la fecha de última ganancia
-                            currentUser.investments[investmentIndex].lastEarningDate = Date.now();
-                            
-                            console.log('Ganancia diaria agregada a GANANCIA (retirable):', dailyEarning);
-                            
-                            // Recargar datos desde Firestore para asegurar consistencia
-                            return db.collection('users').doc(currentUser.uid).get();
-                        })
-                        .then((doc) => {
-                            if (doc.exists) {
-                                currentUser = { uid: doc.id, ...doc.data() };
-                                updateAmountsDisplay();
-                                updateInvestmentHistory();
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error al aplicar ganancia:", error);
-                        });
-                    }
-                    
-                    timeLeft = 24 * 60 * 60;
+                    // Aplicar ganancia diaria automáticamente
+                    applyDailyEarning(investmentId, plan, amount);
+                    timeLeft = 24 * 60 * 60; // Reiniciar a 24 horas
                 }
                 
                 const hours = Math.floor(timeLeft / 3600);
@@ -2549,6 +2543,84 @@
 
             updateCounter();
             investmentCounters[investmentId] = setInterval(updateCounter, 1000);
+        }
+
+        // NUEVA FUNCIÓN: Aplicar ganancia diaria con mejor manejo de errores
+        function applyDailyEarning(investmentId, plan, amount) {
+            if (!currentUser) return;
+            
+            const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
+            if (investmentIndex === -1) return;
+            
+            const dailyEarning = amount * (parseInt(plan) / 100);
+            
+            console.log(`Aplicando ganancia diaria: RD$ ${dailyEarning.toFixed(2)} para inversión ${investmentId}`);
+            
+            // Actualizar en Firestore PRIMERO
+            db.collection('users').doc(currentUser.uid).update({
+                earnings: firebase.firestore.FieldValue.increment(dailyEarning),
+                [`investments.${investmentIndex}.earnings`]: firebase.firestore.FieldValue.increment(dailyEarning),
+                [`investments.${investmentIndex}.lastEarningDate`]: Date.now()
+            })
+            .then(() => {
+                // ACTUALIZAR DATOS LOCALES después del éxito en Firestore
+                return db.collection('users').doc(currentUser.uid).get();
+            })
+            .then((doc) => {
+                if (doc.exists) {
+                    currentUser = { uid: doc.id, ...doc.data() };
+                    
+                    // ACTUALIZAR TODAS LAS INTERFACES
+                    updateAmountsDisplay();
+                    updateInvestmentHistory();
+                    updatePersonalInfo();
+                    
+                    console.log('✅ Ganancia diaria aplicada correctamente:', {
+                        inversión: investmentId,
+                        ganancia: dailyEarning,
+                        gananciasTotales: currentUser.earnings
+                    });
+                    
+                    // Mostrar notificación al usuario
+                    showEarningNotification(dailyEarning);
+                }
+            })
+            .catch((error) => {
+                console.error('❌ Error al aplicar ganancia diaria:', error);
+                
+                // Reintentar después de 5 segundos
+                setTimeout(() => {
+                    console.log('Reintentando aplicar ganancia...');
+                    applyDailyEarning(investmentId, plan, amount);
+                }, 5000);
+            });
+        }
+
+        // FUNCIÓN ADICIONAL: Mostrar notificación de ganancia
+        function showEarningNotification(amount) {
+            const notification = document.createElement('div');
+            notification.className = 'earning-notification';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-coins" style="font-size: 20px;"></i>
+                    <div>
+                        <div>¡Ganancia Diaria!</div>
+                        <div>+ RD$ ${amount.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 5 segundos
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 5000);
         }
 
         // CORREGIDO: Botones de inversión CON GANANCIAS POR REFERIDOS AUTOMÁTICAS (SOLO a referralEarnings)
@@ -2704,7 +2776,7 @@
                 userReferralEarnings.textContent = (currentUser.referralEarnings || 0).toFixed(2); // Ganancias referidos
                 
                 // Actualizar enlace de referidos
-                referralLink.value = `https://trading-ai-dubai-v2.web.app/?ref=${currentUser.referralCode}`;
+                referralLink.value = `https://infinitycapitalbest.github.io/InfinityCapital/?ref=${currentUser.referralCode}`;
                 
                 // Cargar inversiones activas
                 activeInvestments = currentUser.investments || [];
