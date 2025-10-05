@@ -2708,8 +2708,8 @@
                         const referrerDoc = querySnapshot.docs[0];
                         const referrerData = referrerDoc.data();
                         
-                        // Calcular comisión (8% de la inversión)
-                        const commission = investmentAmount * 0.08;
+                        // Calcular comisión (5% de la inversión)
+                        const commission = investmentAmount * 0.05;
                         
                         // Actualizar referido en la lista del referidor
                         const updatedReferrals = referrerData.referrals ? [...referrerData.referrals] : [];
