@@ -1828,6 +1828,9 @@
             updateReferralsList();
             updateRequestsStatus();
             
+            // ✅ INICIAR SINCRONIZACIÓN PERIÓDICA
+            startPeriodicSync();
+            
             // Mostrar elementos solo para usuarios autenticados
             menuToggle.classList.add('visible');
             adminIcon.classList.add('visible');
@@ -2498,7 +2501,7 @@
             resetWithdrawModal();
         });
 
-        // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS CON SINCRONIZACIÓN
+        // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS CON ACTUALIZACIÓN DE UI
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
             // ✅ VALIDACIÓN EXTRA: Verificar que los datos sean válidos
             if (!investmentId || !plan || !amount || !startTime) {
@@ -2542,6 +2545,12 @@
                     // Aplicar ganancia diaria automáticamente
                     applyDailyEarning(investmentId, plan, amount);
                     timeLeft = 24 * 60 * 60; // Reiniciar a 24 horas
+                    
+                    // ✅ ACTUALIZAR CONTADOR INMEDIATAMENTE
+                    const countdownElement = document.getElementById(`countdown-${investmentId}`);
+                    if (countdownElement) {
+                        countdownElement.textContent = "24:00:00";
+                    }
                 }
                 
                 const hours = Math.floor(timeLeft / 3600);
@@ -2559,7 +2568,7 @@
             investmentCounters[investmentId] = setInterval(updateCounter, 1000);
         }
 
-        // NUEVA FUNCIÓN: Aplicar ganancia diaria con mejor manejo de errores
+        // CORREGIDO: Función para aplicar ganancia diaria con ACTUALIZACIÓN COMPLETA DE UI
         function applyDailyEarning(investmentId, plan, amount) {
             if (!currentUser) return;
             
@@ -2577,27 +2586,31 @@
                 [`investments.${investmentIndex}.lastEarningDate`]: Date.now()
             })
             .then(() => {
-                // ACTUALIZAR DATOS LOCALES después del éxito en Firestore
-                return db.collection('users').doc(currentUser.uid).get();
-            })
-            .then((doc) => {
-                if (doc.exists) {
-                    currentUser = { uid: doc.id, ...doc.data() };
-                    
-                    // ACTUALIZAR TODAS LAS INTERFACES
-                    updateAmountsDisplay();
-                    updateInvestmentHistory();
-                    updatePersonalInfo();
-                    
-                    console.log('✅ Ganancia diaria aplicada correctamente:', {
-                        inversión: investmentId,
-                        ganancia: dailyEarning,
-                        gananciasTotales: currentUser.earnings
+                // ✅ ACTUALIZAR DATOS LOCALES inmediatamente después del éxito en Firestore
+                currentUser.earnings = (currentUser.earnings || 0) + dailyEarning;
+                currentUser.investments[investmentIndex].earnings += dailyEarning;
+                currentUser.investments[investmentIndex].lastEarningDate = Date.now();
+                
+                // ✅ ACTUALIZAR TODAS LAS INTERFACES DE FORMA INMEDIATA
+                updateAmountsDisplay();
+                updateInvestmentHistory();
+                updatePersonalInfo();
+                
+                console.log('✅ Ganancia diaria aplicada correctamente:', {
+                    inversión: investmentId,
+                    ganancia: dailyEarning,
+                    gananciasTotales: currentUser.earnings
+                });
+                
+                // ✅ Mostrar notificación al usuario
+                showEarningNotification(dailyEarning);
+                
+                // ✅ SINCRONIZACIÓN COMPLETA después de aplicar ganancia
+                setTimeout(() => {
+                    syncUserData().then(() => {
+                        console.log('🔄 Sincronización post-ganancia completada');
                     });
-                    
-                    // Mostrar notificación al usuario
-                    showEarningNotification(dailyEarning);
-                }
+                }, 1000);
             })
             .catch((error) => {
                 console.error('❌ Error al aplicar ganancia diaria:', error);
@@ -2635,6 +2648,125 @@
                     }
                 }, 500);
             }, 5000);
+        }
+
+        // CORREGIDO: Función mejorada para inicializar contadores al cargar
+        function initializeInvestmentCounters() {
+            if (!currentUser || !currentUser.investments) return;
+            
+            // ✅ CORRECCIÓN: Limpiar TODOS los contadores existentes de forma segura
+            if (investmentCounters) {
+                Object.values(investmentCounters).forEach(interval => {
+                    if (interval) clearInterval(interval);
+                });
+            }
+            investmentCounters = {};
+            countersContainer.innerHTML = '';
+            
+            // ✅ CORRECCIÓN: Iniciar contadores SOLO para inversiones válidas
+            const validInvestments = currentUser.investments.filter(inv => 
+                inv && inv.id && inv.plan && inv.amount
+            );
+            
+            if (validInvestments.length > 0) {
+                validInvestments.forEach(inv => {
+                    const startTime = inv.startTime || Date.now();
+                    startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
+                });
+                
+                console.log(`✅ ${validInvestments.length} contadores de inversión iniciados`);
+            }
+        }
+
+        // CORREGIDO: Función mejorada para actualizar displays de cantidades
+        function updateAmountsDisplay() {
+            if (currentUser) {
+                // ✅ ACTUALIZAR BOTONES PRINCIPALES
+                balanceAmount.textContent = currentUser.balance.toFixed(2);
+                earningsAmount.textContent = (currentUser.earnings || 0).toFixed(2);
+                referralAmount.textContent = (currentUser.referralEarnings || 0).toFixed(2);
+                
+                // ✅ ACTUALIZAR MODALES
+                const currentBalanceElement = document.getElementById('currentBalance');
+                const availableWithdrawElement = document.getElementById('availableWithdraw');
+                const availableEarningsElement = document.getElementById('availableEarnings');
+                const availableReferralEarningsElement = document.getElementById('availableReferralEarnings');
+                
+                if (currentBalanceElement) currentBalanceElement.textContent = currentUser.balance.toFixed(2);
+                if (availableWithdrawElement) availableWithdrawElement.textContent = currentUser.balance.toFixed(2);
+                if (availableEarningsElement) availableEarningsElement.textContent = (currentUser.earnings || 0).toFixed(2);
+                if (availableReferralEarningsElement) availableReferralEarningsElement.textContent = (currentUser.referralEarnings || 0).toFixed(2);
+                
+                console.log('🔄 UI actualizada - Ganancias:', currentUser.earnings);
+            }
+        }
+
+        // CORREGIDO: Función mejorada para actualizar información personal
+        function updatePersonalInfo() {
+            if (currentUser) {
+                userEmail.textContent = currentUser.email;
+                userPhone.textContent = currentUser.phone;
+                userCedula.textContent = currentUser.cedula;
+                userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
+                userBalance.textContent = currentUser.balance.toFixed(2);
+                userEarnings.textContent = (currentUser.earnings || 0).toFixed(2);
+                userReferralEarnings.textContent = (currentUser.referralEarnings || 0).toFixed(2);
+                
+                // Actualizar enlace de referidos
+                referralLink.value = `https://infinitycapitalbest.github.io/InfinityCapital/?ref=${currentUser.referralCode}`;
+                
+                // ✅ CORRECCIÓN CRÍTICA: Garantizar que activeInvestments SIEMPRE sea array válido
+                activeInvestments = [];
+                if (currentUser.investments && Array.isArray(currentUser.investments)) {
+                    activeInvestments = currentUser.investments.filter(inv => 
+                        inv && inv.id && inv.plan && inv.amount
+                    );
+                }
+                
+                // ✅ INICIALIZAR CONTADORES después de cargar datos
+                initializeInvestmentCounters();
+                
+                // ✅ ACTUALIZAR BOTONES PRINCIPALES también aquí por seguridad
+                updateAmountsDisplay();
+                
+                console.log('🔄 Información personal actualizada - Ganancias:', currentUser.earnings);
+            }
+        }
+
+        // NUEVA FUNCIÓN: Sincronizar datos del usuario desde Firestore
+        function syncUserData() {
+            if (!currentUser || !currentUser.uid) return;
+            
+            return db.collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const updatedUser = { uid: doc.id, ...doc.data() };
+                        currentUser = updatedUser;
+                        
+                        // Actualizar todas las interfaces
+                        updateAmountsDisplay();
+                        updatePersonalInfo();
+                        updateInvestmentHistory();
+                        updateReferralsList();
+                        updateRequestsStatus();
+                        
+                        console.log('✅ Datos de usuario sincronizados - Ganancias:', currentUser.earnings);
+                        return currentUser;
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Error al sincronizar datos:', error);
+                });
+        }
+
+        // NUEVA FUNCIÓN: Verificación periódica de sincronización
+        function startPeriodicSync() {
+            // Sincronizar cada 30 segundos para mantener la UI actualizada
+            setInterval(() => {
+                if (currentUser && currentUser.uid) {
+                    syncUserData();
+                }
+            }, 30000);
         }
 
         // CORREGIDO: Botones de inversión CON GANANCIAS POR REFERIDOS AUTOMÁTICAS (SOLO a referralEarnings)
@@ -2767,60 +2899,6 @@
                 .catch((error) => {
                     console.error("Error al procesar comisión por referido:", error);
                 });
-        }
-
-        // CORREGIDO: Actualizar displays de cantidades en botones - MOSTRAR CORRECTAMENTE SEPARADOS
-        function updateAmountsDisplay() {
-            if (currentUser) {
-                balanceAmount.textContent = currentUser.balance.toFixed(2);           // SOLO saldo recargado
-                earningsAmount.textContent = (currentUser.earnings || 0).toFixed(2);  // Ganancias de inversiones
-                referralAmount.textContent = (currentUser.referralEarnings || 0).toFixed(2); // Ganancias por referidos
-            }
-        }
-
-        // CORREGIDO: FUNCIÓN MEJORADA PARA ACTUALIZAR INFORMACIÓN PERSONAL
-        function updatePersonalInfo() {
-            if (currentUser) {
-                userEmail.textContent = currentUser.email;
-                userPhone.textContent = currentUser.phone;
-                userCedula.textContent = currentUser.cedula;
-                userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
-                userBalance.textContent = currentUser.balance.toFixed(2); // SOLO saldo recargado
-                userEarnings.textContent = (currentUser.earnings || 0).toFixed(2); // Ganancias inversiones
-                userReferralEarnings.textContent = (currentUser.referralEarnings || 0).toFixed(2); // Ganancias referidos
-                
-                // Actualizar enlace de referidos
-                referralLink.value = `https://infinitycapitalbest.github.io/InfinityCapital/?ref=${currentUser.referralCode}`;
-                
-                // ✅ CORRECCIÓN CRÍTICA: Garantizar que activeInvestments SIEMPRE sea array válido
-                activeInvestments = [];
-                if (currentUser.investments && Array.isArray(currentUser.investments)) {
-                    activeInvestments = currentUser.investments.filter(inv => 
-                        inv && inv.id && inv.plan && inv.amount
-                    );
-                }
-                
-                // ✅ CORRECCIÓN: Limpiar TODOS los contadores existentes de forma segura
-                if (investmentCounters) {
-                    Object.values(investmentCounters).forEach(interval => {
-                        if (interval) clearInterval(interval);
-                    });
-                }
-                investmentCounters = {};
-                countersContainer.innerHTML = '';
-                
-                // ✅ CORRECCIÓN: Iniciar contadores SOLO para inversiones válidas
-                if (activeInvestments.length > 0) {
-                    activeInvestments.forEach(inv => {
-                        if (inv && inv.id && inv.plan && inv.amount) {
-                            const startTime = inv.startTime || Date.now();
-                            startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
-                        }
-                    });
-                }
-                
-                updateAmountsDisplay();
-            }
         }
 
         // Actualizar historial de inversiones
