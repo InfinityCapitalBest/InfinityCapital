@@ -19,8 +19,8 @@
 
         :root {
             --primary: #333333;
-            --secondary: #D4AF37;
-            --accent: #FFD700;
+            --secondary: #B8860B;
+            --accent: #D4AF37;
             --light: #f5f5f5;
             --dark: #1a1a1a;
             --success: #4caf50;
@@ -272,7 +272,7 @@
             font-size: 48px;
             font-weight: 700;
             margin-bottom: 30px;
-            background: linear-gradient(45deg, #D4AF37, #FFD700, #D4AF37, #FFD700);
+            background: linear-gradient(45deg, #808080, #D4AF37, #B8860B, #808080);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -941,31 +941,6 @@
                 flex-direction: column;
             }
         }
-
-        /* Estilos para notificaciones de ganancias */
-        .earning-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 10000;
-            font-weight: bold;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
     </style>
 </head>
 <body>
@@ -1077,7 +1052,6 @@
                             <th>Usuario</th>
                             <th>Tipo</th>
                             <th>Monto</th>
-                            <th>Wallet/Cuenta</th>
                             <th>Fecha</th>
                             <th>Estado</th>
                         </tr>
@@ -1303,13 +1277,46 @@
         <div class="modal-content">
             <h3>Retirar Fondos</h3>
             <p>Saldo disponible: <strong>RD$ <span id="availableWithdraw">0.00</span></strong></p>
-            <p>Ganancia disponible: <strong>RD$ <span id="availableEarnings" style="color: var(--success);">0.00</span></strong></p>
-            <p>Ganancia por referidos: <strong>RD$ <span id="availableReferralEarnings" style="color: var(--accent);">0.00</span></strong></p>
             
             <div class="modal-buttons">
-                <button class="btn" id="showWithdrawBalance">Retirar desde Saldo</button>
-                <button class="btn" id="showWithdrawEarnings">Retirar desde Ganancia</button>
-                <button class="btn" id="showWithdrawReferral">Retirar desde Referidos</button>
+                <button class="btn" id="showWithdrawCrypto">Retirar con Criptomonedas</button>
+                <button class="btn" id="showWithdrawBank">Retirar con Banco</button>
+            </div>
+            
+            <!-- Opciones de Criptomonedas para Retiro -->
+            <div id="withdrawCryptoOptions" class="crypto-options">
+                <h4>Selecciona una criptomoneda:</h4>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
+                
+                <!-- Información de Wallet para Retiro -->
+                <div id="withdrawCryptoInfo" class="wallet-info">
+                    <h4>Ingresa tu Wallet</h4>
+                    <div class="wallet-address">
+                        <input type="text" id="withdrawCryptoWallet" placeholder="Pega tu dirección de wallet aquí">
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="withdrawCryptoAmount" placeholder="Monto a retirar (USD)">
+                    </div>
+                    <button class="btn" id="submitWithdrawCrypto">Solicitar Retiro</button>
+                </div>
+            </div>
+            
+            <!-- Opciones de Banco para Retiro -->
+            <div id="withdrawBankOptions" class="bank-options">
+                <h4>Selecciona un banco:</h4>
+                <!-- Las opciones se cargarán dinámicamente desde la base de datos -->
+                
+                <!-- Información de Cuenta para Retiro -->
+                <div id="withdrawBankInfo" class="bank-info">
+                    <h4>Información de Cuenta</h4>
+                    <div class="bank-account">
+                        <input type="text" id="withdrawBankAccount" placeholder="Ingresa tu número de cuenta">
+                    </div>
+                    <div class="amount-input">
+                        <input type="number" id="withdrawBankAmount" placeholder="Monto a retirar (RD$)">
+                    </div>
+                    <button class="btn" id="submitWithdrawBank">Solicitar Retiro</button>
+                </div>
             </div>
             
             <button class="btn" style="margin-top: 15px; background: #666;" id="closeWithdrawModal">Cancelar</button>
@@ -1333,7 +1340,7 @@
                             <i class="fas fa-chart-line"></i> Ganancia
                             <div class="btn-amount">RD$ <span id="earningsAmount">0.00</span></div>
                         </button>
-                        <button class="main-btn" id="showWithdrawReferralBtn">
+                        <button class="main-btn" id="referralEarningsBtn">
                             <i class="fas fa-users"></i> Referidos
                             <div class="btn-amount">RD$ <span id="referralAmount">0.00</span></div>
                         </button>
@@ -1435,10 +1442,6 @@
                             <label>Ganancias Totales:</label>
                             <p>RD$ <span id="userEarnings">0.00</span></p>
                         </div>
-                        <div class="info-item">
-                            <label>Ganancias por Referidos:</label>
-                            <p>RD$ <span id="userReferralEarnings">0.00</span></p>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -1462,7 +1465,7 @@
                     
                     <!-- Enlace de referidos -->
                     <h3 style="margin-top: 30px;"><i class="fas fa-user-plus"></i> Enlace de Referidos</h3>
-                    <p>Gana 5% por cada inversión de tus referidos</p>
+                    <p>Gana 8% por cada inversión de tus referidos</p>
                     <div class="referral-link">
                         <input type="text" id="referralLink" value="" readonly>
                         <button class="copy-btn" id="copyReferralBtn">Copiar</button>
@@ -1542,7 +1545,7 @@
 
         <footer>
             <div class="container">
-                <p>&copy; 2025 GOLD. Todos los derechos reservados.</p>
+                <p>&copy; 2023 GOLD. Todos los derechos reservados.</p>
                 <p>Inversiones sujetas a riesgos. Por favor lea nuestros términos y condiciones antes de invertir.</p>
             </div>
         </footer>
@@ -1608,10 +1611,18 @@
         // Elementos de retiro
         const withdrawModal = document.getElementById('withdrawModal');
         const closeWithdrawModal = document.getElementById('closeWithdrawModal');
-        const showWithdrawBalance = document.getElementById('showWithdrawBalance');
-        const showWithdrawEarnings = document.getElementById('showWithdrawEarnings');
-        const showWithdrawReferral = document.getElementById('showWithdrawReferral');
-        const showWithdrawReferralBtn = document.getElementById('showWithdrawReferralBtn');
+        const showWithdrawCrypto = document.getElementById('showWithdrawCrypto');
+        const showWithdrawBank = document.getElementById('showWithdrawBank');
+        const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
+        const withdrawBankOptions = document.getElementById('withdrawBankOptions');
+        const withdrawCryptoInfo = document.getElementById('withdrawCryptoInfo');
+        const withdrawBankInfo = document.getElementById('withdrawBankInfo');
+        const withdrawCryptoWallet = document.getElementById('withdrawCryptoWallet');
+        const withdrawCryptoAmount = document.getElementById('withdrawCryptoAmount');
+        const submitWithdrawCrypto = document.getElementById('submitWithdrawCrypto');
+        const withdrawBankAccount = document.getElementById('withdrawBankAccount');
+        const withdrawBankAmount = document.getElementById('withdrawBankAmount');
+        const submitWithdrawBank = document.getElementById('submitWithdrawBank');
         
         // Otros elementos
         const countersContainer = document.getElementById('countersContainer');
@@ -1636,7 +1647,6 @@
         const userRegDate = document.getElementById('userRegDate');
         const userBalance = document.getElementById('userBalance');
         const userEarnings = document.getElementById('userEarnings');
-        const userReferralEarnings = document.getElementById('userReferralEarnings');
 
         // Elementos de cantidades en botones
         const balanceAmount = document.getElementById('balanceAmount');
@@ -1709,7 +1719,7 @@
             registerScreen.style.display = 'flex';
         });
 
-        // CORREGIDO: Registro de usuario - Inicializar correctamente los campos separados
+        // Registro de usuario CON GANANCIAS POR REFERIDOS AUTOMÁTICAS
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -1725,15 +1735,15 @@
                     const user = userCredential.user;
                     const userReferralCode = generateReferralCode();
                     
-                    // CORREGIDO: Crear perfil de usuario con campos separados
+                    // Crear perfil de usuario en Firestore
                     return db.collection('users').doc(user.uid).set({
                         uid: user.uid,
                         email: email,
                         phone: phone,
                         cedula: cedula,
-                        balance: 0,           // SOLO saldo recargado
-                        earnings: 0,          // Ganancias de inversiones
-                        referralEarnings: 0,  // Ganancias por referidos (SEPARADO)
+                        balance: 0,
+                        earnings: 0,
+                        referralEarnings: 0,
                         status: "pending",
                         registrationDate: new Date().toISOString(),
                         investments: [],
@@ -1828,9 +1838,6 @@
             updateReferralsList();
             updateRequestsStatus();
             
-            // ✅ INICIAR SINCRONIZACIÓN PERIÓDICA
-            startPeriodicSync();
-            
             // Mostrar elementos solo para usuarios autenticados
             menuToggle.classList.add('visible');
             adminIcon.classList.add('visible');
@@ -1896,24 +1903,12 @@
         withdrawBtnMenu.addEventListener('click', function(e) {
             e.preventDefault();
             document.getElementById('availableWithdraw').textContent = currentUser.balance.toFixed(2);
-            document.getElementById('availableEarnings').textContent = currentUser.earnings.toFixed(2);
-            document.getElementById('availableReferralEarnings').textContent = (currentUser.referralEarnings || 0).toFixed(2);
             withdrawModal.style.display = 'flex';
             resetWithdrawModal();
             
             // Cerrar el menú lateral
             sidebar.classList.remove('open');
             mainScreen.classList.remove('sidebar-open');
-        });
-
-        // Botón para retirar desde referidos
-        showWithdrawReferralBtn.addEventListener('click', function() {
-            document.getElementById('availableWithdraw').textContent = currentUser.balance.toFixed(2);
-            document.getElementById('availableEarnings').textContent = currentUser.earnings.toFixed(2);
-            document.getElementById('availableReferralEarnings').textContent = (currentUser.referralEarnings || 0).toFixed(2);
-            withdrawModal.style.display = 'flex';
-            resetWithdrawModal();
-            showWithdrawOptions('referral');
         });
 
         // Cerrar sesión
@@ -2135,115 +2130,8 @@
             });
         });
 
-        // Sistema de Retiro - Mostrar opciones desde Saldo
-        showWithdrawBalance.addEventListener('click', function() {
-            showWithdrawOptions('balance');
-        });
-
-        // Sistema de Retiro - Mostrar opciones desde Ganancia
-        showWithdrawEarnings.addEventListener('click', function() {
-            showWithdrawOptions('earnings');
-        });
-
-        // Sistema de Retiro - Mostrar opciones desde Referidos
-        showWithdrawReferral.addEventListener('click', function() {
-            showWithdrawOptions('referral');
-        });
-
-        // FUNCIÓN PARA MOSTRAR OPCIONES DE RETIRO DESDE SALDO, GANANCIA O REFERIDOS
-        function showWithdrawOptions(source) {
-            const withdrawSource = source; // 'balance', 'earnings' o 'referral'
-            const availableAmount = 
-                withdrawSource === 'balance' ? currentUser.balance : 
-                withdrawSource === 'earnings' ? currentUser.earnings : 
-                (currentUser.referralEarnings || 0);
-            
-            const optionsHTML = `
-                <div class="modal-buttons">
-                    <button class="btn" id="showWithdrawCrypto">Retirar con Criptomonedas</button>
-                    <button class="btn" id="showWithdrawBank">Retirar con Banco</button>
-                </div>
-                
-                <!-- Opciones de Criptomonedas para Retiro -->
-                <div id="withdrawCryptoOptions" class="crypto-options">
-                    <h4>Selecciona una criptomoneda:</h4>
-                    <!-- Las opciones se cargarán dinámicamente -->
-                    
-                    <div id="withdrawCryptoInfo" class="wallet-info">
-                        <h4>Ingresa tu Wallet</h4>
-                        <div class="wallet-address">
-                            <input type="text" id="withdrawCryptoWallet" placeholder="Pega tu dirección de wallet aquí">
-                        </div>
-                        <div class="amount-input">
-                            <input type="number" id="withdrawCryptoAmount" placeholder="Monto a retirar (USD)" max="${availableAmount}" value="${availableAmount}">
-                            <small>Monto máximo: RD$ ${availableAmount.toFixed(2)}</small>
-                        </div>
-                        <button class="btn" id="submitWithdrawCrypto" data-source="${withdrawSource}">Solicitar Retiro</button>
-                    </div>
-                </div>
-                
-                <!-- Opciones de Banco para Retiro -->
-                <div id="withdrawBankOptions" class="bank-options">
-                    <h4>Selecciona un banco:</h4>
-                    <!-- Las opciones se cargarán dinámicamente -->
-                    
-                    <div id="withdrawBankInfo" class="bank-info">
-                        <h4>Información de Cuenta</h4>
-                        <div class="bank-account">
-                            <input type="text" id="withdrawBankAccount" placeholder="Ingresa tu número de cuenta">
-                        </div>
-                        <div class="amount-input">
-                            <input type="number" id="withdrawBankAmount" placeholder="Monto a retirar (RD$)" max="${availableAmount}" value="${availableAmount}">
-                            <small>Monto máximo: RD$ ${availableAmount.toFixed(2)}</small>
-                        </div>
-                        <button class="btn" id="submitWithdrawBank" data-source="${withdrawSource}">Solicitar Retiro</button>
-                    </div>
-                </div>
-                
-                <button class="btn" style="margin-top: 15px; background: #666;" id="closeWithdrawModal">Cancelar</button>
-            `;
-            
-            document.querySelector('#withdrawModal .modal-content').innerHTML = `
-                <h3>Retirar ${withdrawSource === 'balance' ? 'desde Saldo' : withdrawSource === 'earnings' ? 'desde Ganancia' : 'desde Referidos'}</h3>
-                <p>Monto disponible: <strong>RD$ ${availableAmount.toFixed(2)}</strong></p>
-                ${optionsHTML}
-            `;
-            
-            // Re-configurar event listeners
-            setupWithdrawModalEvents(withdrawSource);
-        }
-
-        // CONFIGURAR EVENTOS DEL MODAL DE RETIRO
-        function setupWithdrawModalEvents(source) {
-            const withdrawSource = source;
-            
-            document.getElementById('showWithdrawCrypto').addEventListener('click', function() {
-                showWithdrawCryptoOptions(withdrawSource);
-            });
-            
-            document.getElementById('showWithdrawBank').addEventListener('click', function() {
-                showWithdrawBankOptions(withdrawSource);
-            });
-            
-            document.getElementById('submitWithdrawCrypto').addEventListener('click', function() {
-                submitWithdrawCryptoRequest(withdrawSource);
-            });
-            
-            document.getElementById('submitWithdrawBank').addEventListener('click', function() {
-                submitWithdrawBankRequest(withdrawSource);
-            });
-            
-            document.getElementById('closeWithdrawModal').addEventListener('click', function() {
-                withdrawModal.style.display = 'none';
-                resetWithdrawModal();
-            });
-        }
-
-        // Mostrar opciones de criptomonedas para retiro
-        function showWithdrawCryptoOptions(source) {
-            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
-            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
-            
+        // Sistema de Retiro - Criptomonedas
+        showWithdrawCrypto.addEventListener('click', function() {
             withdrawCryptoOptions.style.display = 'block';
             withdrawBankOptions.style.display = 'none';
             
@@ -2274,17 +2162,14 @@
                         this.classList.add('active');
                         
                         // Mostrar información de wallet para retiro
-                        document.getElementById('withdrawCryptoInfo').style.display = 'block';
+                        withdrawCryptoInfo.style.display = 'block';
                     });
                 });
             });
-        }
+        });
 
-        // Mostrar opciones de bancos para retiro
-        function showWithdrawBankOptions(source) {
-            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
-            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
-            
+        // Sistema de Retiro - Bancos
+        showWithdrawBank.addEventListener('click', function() {
             withdrawBankOptions.style.display = 'block';
             withdrawCryptoOptions.style.display = 'none';
             
@@ -2293,12 +2178,6 @@
                 // Limpiar opciones existentes
                 const existingOptions = withdrawBankOptions.querySelectorAll('.bank-option');
                 existingOptions.forEach(option => option.remove());
-                
-                // Verificar si hay cuentas bancarias
-                if (Object.keys(bankAccounts).length === 0) {
-                    withdrawBankOptions.innerHTML += '<p>No hay cuentas bancarias disponibles</p>';
-                    return;
-                }
                 
                 // Agregar opciones dinámicamente
                 Object.keys(bankAccounts).forEach((bank) => {
@@ -2321,16 +2200,16 @@
                         this.classList.add('active');
                         
                         // Mostrar información de cuenta para retiro
-                        document.getElementById('withdrawBankInfo').style.display = 'block';
+                        withdrawBankInfo.style.display = 'block';
                     });
                 });
             });
-        }
+        });
 
-        // FUNCIÓN PARA RETIRO CON CRIPTOMONEDAS DESDE SALDO, GANANCIA O REFERIDOS
-        function submitWithdrawCryptoRequest(source) {
-            const amount = parseFloat(document.getElementById('withdrawCryptoAmount').value);
-            const wallet = document.getElementById('withdrawCryptoWallet').value.trim();
+        // Enviar retiro con criptomonedas
+        submitWithdrawCrypto.addEventListener('click', function() {
+            const amount = parseFloat(withdrawCryptoAmount.value);
+            const wallet = withdrawCryptoWallet.value;
             const selectedCrypto = document.querySelector('#withdrawCryptoOptions .crypto-option.active');
             
             if (!selectedCrypto) {
@@ -2348,13 +2227,8 @@
                 return;
             }
             
-            const availableAmount = 
-                source === 'balance' ? currentUser.balance : 
-                source === 'earnings' ? currentUser.earnings : 
-                (currentUser.referralEarnings || 0);
-                
-            if (amount > availableAmount) {
-                alert(`Monto insuficiente en ${source === 'balance' ? 'saldo' : source === 'earnings' ? 'ganancia' : 'referidos'}`);
+            if (amount > currentUser.balance) {
+                alert('Saldo insuficiente para realizar este retiro');
                 return;
             }
             
@@ -2368,9 +2242,7 @@
                 wallet: wallet,
                 amount: amount,
                 status: 'pending',
-                date: new Date().toISOString(),
-                userWallet: wallet,
-                source: source // 'balance', 'earnings' o 'referral'
+                date: new Date().toISOString()
             };
             
             // Guardar en Firestore
@@ -2378,7 +2250,7 @@
                 withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
             })
             .then(() => {
-                alert(`Solicitud de retiro desde ${source === 'balance' ? 'saldo' : source === 'earnings' ? 'ganancia' : 'referidos'} enviada. Estará pendiente hasta ser aprobada por el administrador.`);
+                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
                 withdrawModal.style.display = 'none';
                 resetWithdrawModal();
                 updateRequestsStatus();
@@ -2387,12 +2259,12 @@
                 console.error("Error al enviar solicitud de retiro:", error);
                 alert('Error al enviar la solicitud: ' + error.message);
             });
-        }
+        });
 
-        // FUNCIÓN PARA RETIRO CON BANCO DESDE SALDO, GANANCIA O REFERIDOS
-        function submitWithdrawBankRequest(source) {
-            const amount = parseFloat(document.getElementById('withdrawBankAmount').value);
-            const account = document.getElementById('withdrawBankAccount').value.trim();
+        // Enviar retiro con banco
+        submitWithdrawBank.addEventListener('click', function() {
+            const amount = parseFloat(withdrawBankAmount.value);
+            const account = withdrawBankAccount.value;
             const selectedBank = document.querySelector('#withdrawBankOptions .bank-option.active');
             
             if (!selectedBank) {
@@ -2405,18 +2277,13 @@
                 return;
             }
             
-            if (!amount || amount <= 0 || isNaN(amount)) {
+            if (!amount || amount <= 0) {
                 alert('Por favor ingresa un monto válido');
                 return;
             }
             
-            const availableAmount = 
-                source === 'balance' ? currentUser.balance : 
-                source === 'earnings' ? currentUser.earnings : 
-                (currentUser.referralEarnings || 0);
-                
-            if (amount > availableAmount) {
-                alert(`Monto insuficiente en ${source === 'balance' ? 'saldo' : source === 'earnings' ? 'ganancia' : 'referidos'}`);
+            if (amount > currentUser.balance) {
+                alert('Saldo insuficiente para realizar este retiro');
                 return;
             }
             
@@ -2430,9 +2297,7 @@
                 account: account,
                 amount: amount,
                 status: 'pending',
-                date: new Date().toISOString(),
-                userWallet: account,
-                source: source // 'balance', 'earnings' o 'referral'
+                date: new Date().toISOString()
             };
             
             // Guardar en Firestore
@@ -2440,7 +2305,7 @@
                 withdrawRequests: firebase.firestore.FieldValue.arrayUnion(withdrawRequest)
             })
             .then(() => {
-                alert(`Solicitud de retiro desde ${source === 'balance' ? 'saldo' : source === 'earnings' ? 'ganancia' : 'referidos'} enviada. Estará pendiente hasta ser aprobada por el administrador.`);
+                alert('Solicitud de retiro enviada. Estará pendiente hasta ser aprobada por el administrador.');
                 withdrawModal.style.display = 'none';
                 resetWithdrawModal();
                 updateRequestsStatus();
@@ -2449,7 +2314,7 @@
                 console.error("Error al enviar solicitud de retiro:", error);
                 alert('Error al enviar la solicitud: ' + error.message);
             });
-        }
+        });
 
         // Resetear modal de recarga
         function resetRechargeModal() {
@@ -2471,15 +2336,14 @@
 
         // Resetear modal de retiro
         function resetWithdrawModal() {
-            const withdrawCryptoOptions = document.getElementById('withdrawCryptoOptions');
-            const withdrawBankOptions = document.getElementById('withdrawBankOptions');
-            const withdrawCryptoInfo = document.getElementById('withdrawCryptoInfo');
-            const withdrawBankInfo = document.getElementById('withdrawBankInfo');
-            
-            if (withdrawCryptoOptions) withdrawCryptoOptions.style.display = 'none';
-            if (withdrawBankOptions) withdrawBankOptions.style.display = 'none';
-            if (withdrawCryptoInfo) withdrawCryptoInfo.style.display = 'none';
-            if (withdrawBankInfo) withdrawBankInfo.style.display = 'none';
+            withdrawCryptoOptions.style.display = 'none';
+            withdrawBankOptions.style.display = 'none';
+            withdrawCryptoInfo.style.display = 'none';
+            withdrawBankInfo.style.display = 'none';
+            withdrawCryptoAmount.value = '';
+            withdrawBankAmount.value = '';
+            withdrawCryptoWallet.value = '';
+            withdrawBankAccount.value = '';
             
             // Remover clases active
             document.querySelectorAll('#withdrawCryptoOptions .crypto-option').forEach(opt => {
@@ -2501,58 +2365,110 @@
             resetWithdrawModal();
         });
 
-        // CORREGIDO: FUNCIÓN MEJORADA - GANANCIAS AUTOMÁTICAS CON ACTUALIZACIÓN DE UI
+        // FUNCIÓN MEJORADA - CONTADOR PERSISTENTE Y GANANCIAS SEPARADAS
         function startInvestmentCounter(investmentId, plan, amount, startTime) {
-            // ✅ VALIDACIÓN EXTRA: Verificar que los datos sean válidos
-            if (!investmentId || !plan || !amount || !startTime) {
-                console.error('Datos de inversión inválidos para el contador:', { investmentId, plan, amount, startTime });
-                return;
-            }
-            
+            // Verificar si ya existe un contador para esta inversión
             if (investmentCounters[investmentId]) {
                 clearInterval(investmentCounters[investmentId]);
             }
 
+            // Crear elemento de contador si no existe
             let counterElement = document.getElementById(`counter-${investmentId}`);
             if (!counterElement) {
                 counterElement = document.createElement('div');
                 counterElement.className = 'countdown-container';
                 counterElement.id = `counter-${investmentId}`;
+                counterElement.innerHTML = `
+                    <div class="countdown-title">Inversión Nivel ${plan} - RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</div>
+                    <div class="countdown" id="countdown-${investmentId}">24:00:00</div>
+                    <div class="investment-info">Próxima ganancia</div>
+                `;
                 countersContainer.appendChild(counterElement);
             }
 
-            // ✅ Actualizar HTML del contador
-            counterElement.innerHTML = `
-                <div class="countdown-title">Inversión Nivel ${plan} - RD$ ${amount.toLocaleString('es-DO', {minimumFractionDigits: 2})}</div>
-                <div class="countdown" id="countdown-${investmentId}">24:00:00</div>
-                <div class="investment-info">Próxima ganancia</div>
-            `;
+            // Calcular el tiempo transcurrido desde el inicio (para persistencia)
+            const now = Date.now();
+            const elapsedTime = Math.floor((now - startTime) / 1000); // en segundos
+            const cyclesCompleted = Math.floor(elapsedTime / (24 * 60 * 60)); // ciclos de 24h completados
+            
+            // Calcular ganancias acumuladas pendientes
+            const dailyEarning = amount * (parseInt(plan) / 100);
+            const pendingEarnings = cyclesCompleted * dailyEarning;
+            
+            // Si hay ganancias pendientes, aplicarlas SOLO a earnings
+            if (pendingEarnings > 0) {
+                db.collection('users').doc(currentUser.uid).update({
+                    earnings: firebase.firestore.FieldValue.increment(pendingEarnings)
+                })
+                .then(() => {
+                    // Actualizar usuario local
+                    currentUser.earnings += pendingEarnings;
+                    
+                    // Actualizar la inversión con las nuevas ganancias
+                    const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
+                    if (investmentIndex !== -1) {
+                        currentUser.investments[investmentIndex].earnings += pendingEarnings;
+                        
+                        // Actualizar el tiempo de inicio para el siguiente ciclo
+                        const newStartTime = startTime + (cyclesCompleted * 24 * 60 * 60 * 1000);
+                        currentUser.investments[investmentIndex].startTime = newStartTime;
+                        
+                        // Guardar en Firestore
+                        db.collection('users').doc(currentUser.uid).update({
+                            investments: currentUser.investments
+                        });
+                    }
+                    
+                    updateAmountsDisplay();
+                    updateInvestmentHistory();
+                })
+                .catch((error) => {
+                    console.error("Error al aplicar ganancias acumuladas:", error);
+                });
+            }
 
-            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            // Calcular tiempo restante en el ciclo actual
             const remainingTime = 24 * 60 * 60 - (elapsedTime % (24 * 60 * 60));
             let timeLeft = remainingTime > 0 ? remainingTime : 24 * 60 * 60;
 
+            // Función para actualizar el contador
             function updateCounter() {
-                // ✅ Validación extra dentro del intervalo
-                if (!currentUser) {
-                    clearInterval(investmentCounters[investmentId]);
-                    return;
-                }
-                
                 timeLeft--;
                 
                 if (timeLeft <= 0) {
-                    // Aplicar ganancia diaria automáticamente
-                    applyDailyEarning(investmentId, plan, amount);
-                    timeLeft = 24 * 60 * 60; // Reiniciar a 24 horas
-                    
-                    // ✅ ACTUALIZAR CONTADOR INMEDIATAMENTE
-                    const countdownElement = document.getElementById(`countdown-${investmentId}`);
-                    if (countdownElement) {
-                        countdownElement.textContent = "24:00:00";
+                    // GANANCIA AUTOMÁTICA - SOLO A EARNINGS, NO A BALANCE
+                    const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
+                    if (investmentIndex !== -1) {
+                        const dailyEarning = currentUser.investments[investmentIndex].amount * (parseInt(plan) / 100);
+                        
+                        // ACTUALIZAR SOLO EARNINGS - NO BALANCE
+                        db.collection('users').doc(currentUser.uid).update({
+                            earnings: firebase.firestore.FieldValue.increment(dailyEarning)
+                        })
+                        .then(() => {
+                            // Actualizar usuario local
+                            currentUser.earnings += dailyEarning;
+                            currentUser.investments[investmentIndex].earnings += dailyEarning;
+                            
+                            // Actualizar tiempo de última ganancia
+                            currentUser.investments[investmentIndex].lastEarningDate = Date.now();
+                            
+                            console.log('Ganancia diaria aplicada automáticamente (solo a earnings):', investmentId);
+                            
+                            // Actualizar displays
+                            updateAmountsDisplay();
+                            updateInvestmentHistory();
+                        })
+                        .catch((error) => {
+                            console.error("Error al aplicar ganancia automática:", error);
+                        });
                     }
+                    
+                    // Reiniciar contador
+                    timeLeft = 24 * 60 * 60;
                 }
                 
+                // Actualizar display del contador
                 const hours = Math.floor(timeLeft / 3600);
                 const minutes = Math.floor((timeLeft % 3600) / 60);
                 const seconds = timeLeft % 60;
@@ -2564,212 +2480,12 @@
                 }
             }
 
-            updateCounter();
+            // Iniciar el intervalo y guardar referencia
+            updateCounter(); // Ejecutar inmediatamente para mostrar el tiempo correcto
             investmentCounters[investmentId] = setInterval(updateCounter, 1000);
         }
 
-        // CORREGIDO: Función para aplicar ganancia diaria con ACTUALIZACIÓN COMPLETA DE UI
-        function applyDailyEarning(investmentId, plan, amount) {
-            if (!currentUser) return;
-            
-            const investmentIndex = currentUser.investments.findIndex(inv => inv.id === investmentId);
-            if (investmentIndex === -1) return;
-            
-            const dailyEarning = amount * (parseInt(plan) / 100);
-            
-            console.log(`Aplicando ganancia diaria: RD$ ${dailyEarning.toFixed(2)} para inversión ${investmentId}`);
-            
-            // Actualizar en Firestore PRIMERO
-            db.collection('users').doc(currentUser.uid).update({
-                earnings: firebase.firestore.FieldValue.increment(dailyEarning),
-                [`investments.${investmentIndex}.earnings`]: firebase.firestore.FieldValue.increment(dailyEarning),
-                [`investments.${investmentIndex}.lastEarningDate`]: Date.now()
-            })
-            .then(() => {
-                // ✅ ACTUALIZAR DATOS LOCALES inmediatamente después del éxito en Firestore
-                currentUser.earnings = (currentUser.earnings || 0) + dailyEarning;
-                currentUser.investments[investmentIndex].earnings += dailyEarning;
-                currentUser.investments[investmentIndex].lastEarningDate = Date.now();
-                
-                // ✅ ACTUALIZAR TODAS LAS INTERFACES DE FORMA INMEDIATA
-                updateAmountsDisplay();
-                updateInvestmentHistory();
-                updatePersonalInfo();
-                
-                console.log('✅ Ganancia diaria aplicada correctamente:', {
-                    inversión: investmentId,
-                    ganancia: dailyEarning,
-                    gananciasTotales: currentUser.earnings
-                });
-                
-                // ✅ Mostrar notificación al usuario
-                showEarningNotification(dailyEarning);
-                
-                // ✅ SINCRONIZACIÓN COMPLETA después de aplicar ganancia
-                setTimeout(() => {
-                    syncUserData().then(() => {
-                        console.log('🔄 Sincronización post-ganancia completada');
-                    });
-                }, 1000);
-            })
-            .catch((error) => {
-                console.error('❌ Error al aplicar ganancia diaria:', error);
-                
-                // Reintentar después de 5 segundos
-                setTimeout(() => {
-                    console.log('Reintentando aplicar ganancia...');
-                    applyDailyEarning(investmentId, plan, amount);
-                }, 5000);
-            });
-        }
-
-        // FUNCIÓN ADICIONAL: Mostrar notificación de ganancia
-        function showEarningNotification(amount) {
-            const notification = document.createElement('div');
-            notification.className = 'earning-notification';
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-coins" style="font-size: 20px;"></i>
-                    <div>
-                        <div>¡Ganancia Diaria!</div>
-                        <div>+ RD$ ${amount.toFixed(2)}</div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Remover después de 5 segundos
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.5s ease-in';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 500);
-            }, 5000);
-        }
-
-        // CORREGIDO: Función mejorada para inicializar contadores al cargar
-        function initializeInvestmentCounters() {
-            if (!currentUser || !currentUser.investments) return;
-            
-            // ✅ CORRECCIÓN: Limpiar TODOS los contadores existentes de forma segura
-            if (investmentCounters) {
-                Object.values(investmentCounters).forEach(interval => {
-                    if (interval) clearInterval(interval);
-                });
-            }
-            investmentCounters = {};
-            countersContainer.innerHTML = '';
-            
-            // ✅ CORRECCIÓN: Iniciar contadores SOLO para inversiones válidas
-            const validInvestments = currentUser.investments.filter(inv => 
-                inv && inv.id && inv.plan && inv.amount
-            );
-            
-            if (validInvestments.length > 0) {
-                validInvestments.forEach(inv => {
-                    const startTime = inv.startTime || Date.now();
-                    startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
-                });
-                
-                console.log(`✅ ${validInvestments.length} contadores de inversión iniciados`);
-            }
-        }
-
-        // CORREGIDO: Función mejorada para actualizar displays de cantidades
-        function updateAmountsDisplay() {
-            if (currentUser) {
-                // ✅ ACTUALIZAR BOTONES PRINCIPALES
-                balanceAmount.textContent = currentUser.balance.toFixed(2);
-                earningsAmount.textContent = (currentUser.earnings || 0).toFixed(2);
-                referralAmount.textContent = (currentUser.referralEarnings || 0).toFixed(2);
-                
-                // ✅ ACTUALIZAR MODALES
-                const currentBalanceElement = document.getElementById('currentBalance');
-                const availableWithdrawElement = document.getElementById('availableWithdraw');
-                const availableEarningsElement = document.getElementById('availableEarnings');
-                const availableReferralEarningsElement = document.getElementById('availableReferralEarnings');
-                
-                if (currentBalanceElement) currentBalanceElement.textContent = currentUser.balance.toFixed(2);
-                if (availableWithdrawElement) availableWithdrawElement.textContent = currentUser.balance.toFixed(2);
-                if (availableEarningsElement) availableEarningsElement.textContent = (currentUser.earnings || 0).toFixed(2);
-                if (availableReferralEarningsElement) availableReferralEarningsElement.textContent = (currentUser.referralEarnings || 0).toFixed(2);
-                
-                console.log('🔄 UI actualizada - Ganancias:', currentUser.earnings);
-            }
-        }
-
-        // CORREGIDO: Función mejorada para actualizar información personal
-        function updatePersonalInfo() {
-            if (currentUser) {
-                userEmail.textContent = currentUser.email;
-                userPhone.textContent = currentUser.phone;
-                userCedula.textContent = currentUser.cedula;
-                userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
-                userBalance.textContent = currentUser.balance.toFixed(2);
-                userEarnings.textContent = (currentUser.earnings || 0).toFixed(2);
-                userReferralEarnings.textContent = (currentUser.referralEarnings || 0).toFixed(2);
-                
-                // Actualizar enlace de referidos
-                referralLink.value = `https://infinitycapitalbest.github.io/InfinityCapital/?ref=${currentUser.referralCode}`;
-                
-                // ✅ CORRECCIÓN CRÍTICA: Garantizar que activeInvestments SIEMPRE sea array válido
-                activeInvestments = [];
-                if (currentUser.investments && Array.isArray(currentUser.investments)) {
-                    activeInvestments = currentUser.investments.filter(inv => 
-                        inv && inv.id && inv.plan && inv.amount
-                    );
-                }
-                
-                // ✅ INICIALIZAR CONTADORES después de cargar datos
-                initializeInvestmentCounters();
-                
-                // ✅ ACTUALIZAR BOTONES PRINCIPALES también aquí por seguridad
-                updateAmountsDisplay();
-                
-                console.log('🔄 Información personal actualizada - Ganancias:', currentUser.earnings);
-            }
-        }
-
-        // NUEVA FUNCIÓN: Sincronizar datos del usuario desde Firestore
-        function syncUserData() {
-            if (!currentUser || !currentUser.uid) return;
-            
-            return db.collection('users').doc(currentUser.uid).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const updatedUser = { uid: doc.id, ...doc.data() };
-                        currentUser = updatedUser;
-                        
-                        // Actualizar todas las interfaces
-                        updateAmountsDisplay();
-                        updatePersonalInfo();
-                        updateInvestmentHistory();
-                        updateReferralsList();
-                        updateRequestsStatus();
-                        
-                        console.log('✅ Datos de usuario sincronizados - Ganancias:', currentUser.earnings);
-                        return currentUser;
-                    }
-                })
-                .catch((error) => {
-                    console.error('❌ Error al sincronizar datos:', error);
-                });
-        }
-
-        // NUEVA FUNCIÓN: Verificación periódica de sincronización
-        function startPeriodicSync() {
-            // Sincronizar cada 30 segundos para mantener la UI actualizada
-            setInterval(() => {
-                if (currentUser && currentUser.uid) {
-                    syncUserData();
-                }
-            }, 30000);
-        }
-
-        // CORREGIDO: Botones de inversión CON GANANCIAS POR REFERIDOS AUTOMÁTICAS (SOLO a referralEarnings)
+        // Botones de inversión CON GANANCIAS POR REFERIDOS AUTOMÁTICAS
         investButtons.forEach(button => {
             button.addEventListener('click', function() {
                 if (!currentUser || currentUser.status !== "approved") {
@@ -2795,16 +2511,16 @@
                         return;
                     }
                     
-                    // Crear nueva inversión con tiempo de inicio
+                    // Crear nueva inversión con tiempo de inicio PERSISTENTE
                     const investmentId = Date.now().toString();
-                    const investmentStartTime = Date.now();
+                    const investmentStartTime = Date.now(); // Tiempo de inicio de la inversión
                     
                     const investment = {
                         id: investmentId,
                         plan: plan,
                         amount: amount,
                         date: new Date().toLocaleDateString('es-DO'),
-                        startTime: investmentStartTime,
+                        startTime: investmentStartTime, // Guardar tiempo de inicio PERSISTENTE
                         earnings: 0,
                         lastEarningDate: Date.now()
                     };
@@ -2820,12 +2536,12 @@
                         if (!currentUser.investments) currentUser.investments = [];
                         currentUser.investments.push(investment);
                         
-                        // CORREGIDO: PROCESAR COMISIÓN POR REFERIDO AUTOMÁTICAMENTE (SOLO a referralEarnings)
+                        // PROCESAR COMISIÓN POR REFERIDO AUTOMÁTICAMENTE
                         if (currentUser.referredBy) {
                             processInvestmentReferralCommission(currentUser.referredBy, amount, currentUser.email);
                         }
                         
-                        // Iniciar contador para ganancias diarias
+                        // Iniciar contador para esta inversión
                         startInvestmentCounter(investmentId, plan, amount, investmentStartTime);
                         
                         // Actualizar displays
@@ -2845,7 +2561,7 @@
             });
         });
 
-        // CORREGIDO: Función para procesar comisión por inversión de referido (SOLO a referralEarnings)
+        // Función para procesar comisión por inversión de referido
         function processInvestmentReferralCommission(referralCode, investmentAmount, investorEmail) {
             // Buscar usuario que refirió
             return db.collection('users').where('referralCode', '==', referralCode).get()
@@ -2854,27 +2570,25 @@
                         const referrerDoc = querySnapshot.docs[0];
                         const referrerData = referrerDoc.data();
                         
-                        // Calcular comisión (5% de la inversión)
-                        const commission = investmentAmount * 0.05;
+                        // Calcular comisión (8% de la inversión)
+                        const commission = investmentAmount * 0.08;
                         
                         // Actualizar referido en la lista del referidor
-                        const updatedReferrals = referrerData.referrals ? [...referrerData.referrals] : [];
-                        let referralExists = false;
-                        
-                        for (let i = 0; i < updatedReferrals.length; i++) {
-                            if (updatedReferrals[i].email === investorEmail) {
-                                updatedReferrals[i] = {
-                                    ...updatedReferrals[i],
+                        const updatedReferrals = referrerData.referrals.map(ref => {
+                            if (ref.email === investorEmail) {
+                                return {
+                                    ...ref,
                                     hasInvested: true,
                                     investmentAmount: investmentAmount,
                                     commission: commission,
                                     investmentDate: new Date().toISOString()
                                 };
-                                referralExists = true;
-                                break;
                             }
-                        }
+                            return ref;
+                        });
                         
+                        // Si el referido no estaba en la lista, agregarlo
+                        let referralExists = updatedReferrals.some(ref => ref.email === investorEmail);
                         if (!referralExists) {
                             updatedReferrals.push({
                                 email: investorEmail,
@@ -2886,19 +2600,63 @@
                             });
                         }
                         
-                        // CORREGIDO: SOLO sumar a referralEarnings, NO al balance
+                        // APLICAR COMISIÓN AUTOMÁTICAMENTE AL REFERIDOR
                         return db.collection('users').doc(referrerDoc.id).update({
                             referrals: updatedReferrals,
+                            balance: firebase.firestore.FieldValue.increment(commission),
                             referralEarnings: firebase.firestore.FieldValue.increment(commission)
                         });
                     }
                 })
                 .then(() => {
-                    console.log('Comisión por referido aplicada correctamente (solo en referralEarnings)');
+                    console.log('Comisión por referido aplicada automáticamente');
                 })
                 .catch((error) => {
                     console.error("Error al procesar comisión por referido:", error);
                 });
+        }
+
+        // Actualizar displays de cantidades en botones
+        function updateAmountsDisplay() {
+            if (currentUser) {
+                balanceAmount.textContent = currentUser.balance.toFixed(2);
+                earningsAmount.textContent = currentUser.earnings.toFixed(2);
+                referralAmount.textContent = currentUser.referralEarnings.toFixed(2);
+            }
+        }
+
+        // FUNCIÓN MEJORADA PARA ACTUALIZAR INFORMACIÓN PERSONAL
+        function updatePersonalInfo() {
+            if (currentUser) {
+                userEmail.textContent = currentUser.email;
+                userPhone.textContent = currentUser.phone;
+                userCedula.textContent = currentUser.cedula;
+                userRegDate.textContent = new Date(currentUser.registrationDate).toLocaleDateString('es-DO');
+                userBalance.textContent = currentUser.balance.toFixed(2);
+                userEarnings.textContent = currentUser.earnings.toFixed(2);
+                
+                // Actualizar enlace de referidos CON EL FORMATO CORRECTO
+                referralLink.value = `https://trading-ai-dubai-v2.web.app/?ref=${currentUser.referralCode}`;
+                
+                // Cargar inversiones activas
+                activeInvestments = currentUser.investments || [];
+                
+                // Limpiar contadores existentes antes de recrearlos
+                Object.values(investmentCounters).forEach(interval => {
+                    clearInterval(interval);
+                });
+                investmentCounters = {};
+                countersContainer.innerHTML = '';
+                
+                // Reiniciar contadores para inversiones existentes CON PERSISTENCIA
+                activeInvestments.forEach(inv => {
+                    // Usar el tiempo de inicio guardado en Firestore, o tiempo actual si no existe
+                    const startTime = inv.startTime || Date.now();
+                    startInvestmentCounter(inv.id, inv.plan, inv.amount, startTime);
+                });
+                
+                updateAmountsDisplay();
+            }
         }
 
         // Actualizar historial de inversiones
@@ -3022,18 +2780,9 @@
                         statusText = 'Rechazado';
                     }
                     
-                    // Mostrar información de wallet/cuenta
-                    let walletInfo = '';
-                    if (request.type === 'crypto') {
-                        walletInfo = `<p><strong>Wallet:</strong> ${request.userWallet || request.wallet}</p>`;
-                    } else {
-                        walletInfo = `<p><strong>Cuenta:</strong> ${request.userWallet || request.account}</p>`;
-                    }
-                    
                     requestItem.innerHTML = `
-                        <h4>Retiro ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'} (${request.source === 'balance' ? 'Saldo' : request.source === 'earnings' ? 'Ganancia' : 'Referidos'})</h4>
+                        <h4>Retiro ${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</h4>
                         <p><strong>Monto:</strong> ${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</p>
-                        ${walletInfo}
                         <p><strong>Fecha:</strong> ${new Date(request.date).toLocaleDateString('es-DO')}</p>
                         <p><strong>Estado:</strong> <span style="color: ${statusColor};">${statusText}</span></p>
                     `;
@@ -3097,38 +2846,16 @@
 
         // Cargar wallets de criptomonedas para usuarios
         function loadCryptoWalletsForUser() {
-            return db.collection('paymentSettings').doc('config').get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const settings = doc.data();
-                        return settings.cryptoWallets || {};
-                    } else {
-                        console.log("No se encontró configuración de pagos");
-                        return {};
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error al cargar wallets de criptomonedas:", error);
-                    return {};
-                });
+            return loadPaymentSettings().then(settings => {
+                return settings.cryptoWallets || {};
+            });
         }
 
         // Cargar cuentas bancarias para usuarios
         function loadBankAccountsForUser() {
-            return db.collection('paymentSettings').doc('config').get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const settings = doc.data();
-                        return settings.bankAccounts || {};
-                    } else {
-                        console.log("No se encontró configuración de pagos");
-                        return {};
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error al cargar cuentas bancarias:", error);
-                    return {};
-                });
+            return loadPaymentSettings().then(settings => {
+                return settings.bankAccounts || {};
+            });
         }
 
         // Renderizar wallets de criptomonedas en el panel de administración
@@ -3345,6 +3072,10 @@
             });
         }
 
+        // =============================================
+        // FIN DE FUNCIONES PARA GESTIÓN DE PAGOS
+        // =============================================
+
         // Panel de administración - Tabs
         adminTabs.forEach(tab => {
             tab.addEventListener('click', function() {
@@ -3531,21 +3262,11 @@
                                 if (request.status === 'pending') {
                                     hasPendingRequests = true;
                                     const row = document.createElement('tr');
-                                    
-                                    // Mostrar información de wallet/cuenta según el tipo
-                                    let walletInfo = '';
-                                    if (request.type === 'crypto') {
-                                        walletInfo = `${request.crypto}: ${request.userWallet || request.wallet}`;
-                                    } else {
-                                        walletInfo = `${request.bank}: ${request.userWallet || request.account}`;
-                                    }
-                                    
                                     row.innerHTML = `
                                         <td><input type="checkbox" class="admin-checkbox withdraw-checkbox" data-userid="${doc.id}" data-requestid="${request.id}"></td>
                                         <td>${user.email}</td>
                                         <td>${request.type === 'crypto' ? 'Criptomonedas' : 'Banco'}</td>
                                         <td>${request.amount} ${request.type === 'crypto' ? 'USD' : 'RD$'}</td>
-                                        <td>${walletInfo}</td>
                                         <td>${new Date(request.date).toLocaleDateString('es-DO')}</td>
                                         <td>Pendiente</td>
                                     `;
@@ -3556,7 +3277,7 @@
                     });
                     
                     if (!hasPendingRequests) {
-                        adminWithdrawTable.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay solicitudes de retiro pendientes</td></tr>';
+                        adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay solicitudes de retiro pendientes</td></tr>';
                     }
                     
                     // Configurar checkbox de selección múltiple
@@ -3569,7 +3290,7 @@
                 })
                 .catch((error) => {
                     console.error("Error al cargar solicitudes de retiro:", error);
-                    adminWithdrawTable.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
+                    adminWithdrawTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar las solicitudes</td></tr>';
                 });
         }
 
@@ -3771,7 +3492,7 @@
             }
         });
 
-        // CORREGIDO: Procesar solicitud de recarga - SOLO agregar al balance
+        // Procesar solicitud de recarga
         function processRechargeRequest(userId, requestId, action) {
             return db.collection('users').doc(userId).get()
                 .then((doc) => {
@@ -3782,11 +3503,11 @@
                         
                         if (requestIndex !== -1) {
                             if (action === 'approve') {
-                                // Aprobar recarga - agregar SOLO al balance
+                                // Aprobar recarga - agregar saldo
                                 const amount = rechargeRequests[requestIndex].amount;
                                 rechargeRequests[requestIndex].status = 'approved';
                                 
-                                // CORREGIDO: Actualizar usuario - SOLO al balance
+                                // Actualizar usuario
                                 return db.collection('users').doc(userId).update({
                                     rechargeRequests: rechargeRequests,
                                     balance: firebase.firestore.FieldValue.increment(amount)
@@ -3810,7 +3531,7 @@
                 });
         }
 
-        // CORREGIDO: Procesar solicitud de retiro - RESTAR DE LA FUENTE CORRECTA
+        // Procesar solicitud de retiro
         function processWithdrawRequest(userId, requestId, action) {
             return db.collection('users').doc(userId).get()
                 .then((doc) => {
@@ -3821,25 +3542,15 @@
                         
                         if (requestIndex !== -1) {
                             if (action === 'approve') {
-                                // Aprobar retiro - restar del source correcto
+                                // Aprobar retiro - restar saldo
                                 const amount = withdrawRequests[requestIndex].amount;
-                                const source = withdrawRequests[requestIndex].source || 'balance';
                                 withdrawRequests[requestIndex].status = 'approved';
                                 
-                                // CORREGIDO: Actualizar usuario - restar del source correcto
-                                const updateData = {
-                                    withdrawRequests: withdrawRequests
-                                };
-                                
-                                if (source === 'balance') {
-                                    updateData.balance = firebase.firestore.FieldValue.increment(-amount);
-                                } else if (source === 'earnings') {
-                                    updateData.earnings = firebase.firestore.FieldValue.increment(-amount);
-                                } else if (source === 'referral') {
-                                    updateData.referralEarnings = firebase.firestore.FieldValue.increment(-amount);
-                                }
-                                
-                                return db.collection('users').doc(userId).update(updateData);
+                                // Actualizar usuario
+                                return db.collection('users').doc(userId).update({
+                                    withdrawRequests: withdrawRequests,
+                                    balance: firebase.firestore.FieldValue.increment(-amount)
+                                });
                             } else {
                                 // Rechazar retiro
                                 withdrawRequests[requestIndex].status = 'rejected';
@@ -3938,57 +3649,8 @@
             });
         });
 
-        // CORREGIDO: Función para arreglar saldos mezclados (ejecutar desde consola del administrador)
-        function fixUserBalances() {
-            const password = prompt('Ingrese la contraseña de administrador para ejecutar la corrección:');
-            if (password !== adminPassword) {
-                alert('Contraseña incorrecta.');
-                return;
-            }
-
-            db.collection('users').get().then((querySnapshot) => {
-                let fixedCount = 0;
-                const promises = [];
-                
-                querySnapshot.forEach((doc) => {
-                    const user = doc.data();
-                    // Si hay datos mezclados, separarlos correctamente
-                    const currentBalance = user.balance || 0;
-                    const currentEarnings = user.earnings || 0;
-                    const currentReferralEarnings = user.referralEarnings || 0;
-                    
-                    // Verificar si hay necesidad de corrección
-                    let needsFix = false;
-                    const updateData = {};
-                    
-                    // Si el balance incluye ganancias por referidos, separarlos
-                    if (currentBalance > 0 && currentReferralEarnings === 0 && user.referrals && user.referrals.length > 0) {
-                        // Estimación simple: si tiene referidos pero no tiene ganancias por referidos
-                        const estimatedReferralEarnings = currentBalance * 0.1; // Estimación del 10%
-                        updateData.balance = currentBalance - estimatedReferralEarnings;
-                        updateData.referralEarnings = estimatedReferralEarnings;
-                        needsFix = true;
-                    }
-                    
-                    if (needsFix) {
-                        promises.push(
-                            db.collection('users').doc(doc.id).update(updateData)
-                                .then(() => {
-                                    fixedCount++;
-                                    console.log(`Usuario ${user.email} corregido. Nuevo balance: ${updateData.balance}, Referral: ${updateData.referralEarnings}`);
-                                })
-                        );
-                    }
-                });
-                
-                Promise.all(promises).then(() => {
-                    alert(`Corrección completada. ${fixedCount} usuarios fueron corregidos.`);
-                });
-            }).catch((error) => {
-                console.error("Error en corrección:", error);
-                alert('Error durante la corrección: ' + error.message);
-            });
-        }
+        // Descomenta la siguiente línea para agregar usuarios de prueba (ejecutar solo una vez)
+        // addTestUsers();
     </script>
 </body>
 </html>
